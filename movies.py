@@ -144,16 +144,16 @@ def show_movie_info(movie):
     if omdb_info['imdbRating'] != 'N/A':
         wf.add_item(title = omdb_info['imdbRating'],
                     subtitle = 'IMDb (' + omdb_info['imdbVotes'] + " votes)",
-                    icon = 'imdb.png',
+                    icon = 'img/imdb.png',
                     valid = True,
                     arg = IMDB_URL + 'title/' + omdb_info['imdbID'])
 
     if omdb_info['tomatoMeter'] != 'N/A':
-        tomatoIcon = 'fresh.png'
+        tomatoIcon = 'img/fresh.png'
         if omdb_info['tomatoImage'] == 'N/A':
-            tomatoIcon = 'noidea.png'
+            tomatoIcon = 'img/noidea.png'
         else:
-            tomatoIcon = omdb_info['tomatoImage'] + '.png'
+            tomatoIcon = 'img/' + omdb_info['tomatoImage'] + '.png'
 
         wf.add_item(title = omdb_info['tomatoMeter'] + '%',
                     subtitle = 'Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' + omdb_info['tomatoFresh'] + ' fresh, ' + omdb_info['tomatoRotten'] + ' rotten)',
@@ -164,7 +164,7 @@ def show_movie_info(movie):
     if omdb_info['Metascore'] != 'N/A':
         wf.add_item(title = omdb_info['Metascore'],
                     subtitle = 'Metacritic',
-                    icon = 'meta.png',
+                    icon = 'img/meta.png',
                     valid = True,
                     arg = METACRITIC_SEARCH_URL + movie['title'] + '/results')
 
@@ -179,7 +179,7 @@ def show_movie_info(movie):
                         subtitle = trailer['site'] + u' \u2022 ' + str(trailer['size']) + 'p',
                         valid = True,
                         arg = YOUTUBE_WATCH_URL + trailer['key'],
-                        icon = 'youtube.png')
+                        icon = 'img/youtube.png')
 
     wf.add_item(title=omdb_info['Director'],
                       subtitle='Director',
