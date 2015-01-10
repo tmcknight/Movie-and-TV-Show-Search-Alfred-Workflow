@@ -10,3 +10,6 @@ An Alfred workflow to search for a movie and get a few ratings.
 - The movie details come from [TMDb](http://themoviedb.org/) and the [OMDb API](http://www.omdbapi.com).
 - Built using deanishe's [helper library](https://github.com/deanishe/alfred-workflow) for Alfred workflow development.
 - I love [Alfred](http://alfredapp.com/)!
+
+## License
+This workflow is released under the [MIT Licence](http://opensource.org/licenses/MIT).
