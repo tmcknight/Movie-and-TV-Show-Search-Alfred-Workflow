@@ -19,6 +19,17 @@
 				<string></string>
 			</dict>
 		</array>
+		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>7383993A-C301-4ABD-B9A8-1E115F8F4573</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
 		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 		<array>
 			<dict>
@@ -161,6 +172,36 @@
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>applescript</key>
+				<string>on alfred_script(q)
+	tell application "Alfred 2"		search "movie " &amp; q	end tell
+end alfred_script</string>
+				<key>cachescript</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.applescript</string>
+			<key>uid</key>
+			<string>7383993A-C301-4ABD-B9A8-1E115F8F4573</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>text</key>
+				<string>Search movies for '{query}'</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>6079855E-22E9-4B4C-8DD5-919CB258064A</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string></string>
@@ -170,6 +211,16 @@
 		<dict>
 			<key>ypos</key>
 			<real>130</real>
+		</dict>
+		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
+		<dict>
+			<key>ypos</key>
+			<real>250</real>
+		</dict>
+		<key>7383993A-C301-4ABD-B9A8-1E115F8F4573</key>
+		<dict>
+			<key>ypos</key>
+			<real>250</real>
 		</dict>
 		<key>8C50A179-1A70-4A7D-9E89-B916A4F86DAF</key>
 		<dict>
