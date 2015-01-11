@@ -10,8 +10,8 @@ TMDB_API_URL = 'http://api.themoviedb.org/3/'
 OMDB_API_URL = 'http://www.omdbapi.com/'
 IMDB_URL = 'http://imdb.com/'
 YOUTUBE_WATCH_URL = 'http://youtube.com/watch?v='
-METACRITIC_SEARCH_URL = 'http://www.metacritic.com/search/movie/'
-ROTTEN_TOMATOES_SEARCH_URL = 'http://www.rottentomatoes.com/search/?search='
+METACRITIC_SEARCH_URL = 'http://metacritic.com/search/movie/'
+ROTTEN_TOMATOES_SEARCH_URL = 'http://rottentomatoes.com/search/?search='
 
 log = None
 
@@ -133,16 +133,8 @@ def get_omdb_info(imdb_id):
 def show_movie_info(movie):
     omdb_info = get_omdb_info(movie['imdb_id'])
 
-    subtitleItems = []
-    if omdb_info['Runtime'] != 'N/A':
-        subtitleItems.append(omdb_info['Runtime'])
-    if omdb_info['Genre'] != 'N/A':
-        subtitleItems.append(omdb_info['Genre'])
-    if omdb_info['Rated'] != 'N/A':
-        subtitleItems.append('Rated ' + omdb_info['Rated'])
-
     wf.add_item(title = '%s (%s)' % (movie['title'], movie['release_date'][:4]),
-                subtitle = u' \u2022 '.join(subtitleItems),
+                subtitle = get_subtitle(omdb_info),
                 valid = True,
                 arg = "file://" + wf.workflowdir + '/movie.html')
 
@@ -206,21 +198,36 @@ def show_movie_info(movie):
 
 def generate_movie_html(omdb_info, tmdb_info):
     movie_template = Template(filename='templates/movie.html', output_encoding = 'utf-8')
+
+    production_company = 'N/A'
+    if tmdb_info['production_companies']:
+        production_company = tmdb_info['production_companies'][0]['name']
+
     html = movie_template.render(
             title = omdb_info['Title'],
             backdrop_path = tmdb_info['backdrop_path'],
             poster = tmdb_info['poster_path'],
-            production_company = tmdb_info['production_companies'][0]['name'],
-            genre = omdb_info['Genre'],
+            production_company = production_company,
             overview = tmdb_info['overview'],
             release_date = omdb_info['Released'],
             director = omdb_info['Director'],
-            actors = omdb_info['Actors']
+            actors = omdb_info['Actors'],
+            genre = get_subtitle(omdb_info)
         )
     with open("movie.html", "w+") as text_file:
         text_file.write(html)
 
     return
+
+def get_subtitle(omdb_info):
+    subtitleItems = []
+    if omdb_info['Runtime'] != 'N/A':
+        subtitleItems.append(omdb_info['Runtime'])
+    if omdb_info['Genre'] != 'N/A':
+        subtitleItems.append(omdb_info['Genre'])
+    if omdb_info['Rated'] != 'N/A':
+        subtitleItems.append('Rated ' + omdb_info['Rated'])
+    return u' \u2022 '.join(subtitleItems)
 
 def show_person_info(person):
     return

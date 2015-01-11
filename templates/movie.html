@@ -88,14 +88,15 @@
 	    				<div class='details'>
 	    					<div class='header'>
 	    						<div class='title'>${title | h}</div>
-	    						<div class='company'>${production_company | h}</div>
-	    						<div class='pull-right'>
-	    							<img src='' />
-	    						</div>
+                                % if production_company != 'N/A':   
+                                    <div class='company'>${production_company | h}</div>
+                                % endif
 	    					</div>
-	    					<div class='genre'>
-	    						${genre | h}
-	    					</div>
+                            % if genre != '':   
+    	    					<div class='genre'>
+                                    ${genre | h}
+    	    					</div>
+                            % endif
 	    					<div class='overview'>
 	    						${overview | h}
 	    					</div>
