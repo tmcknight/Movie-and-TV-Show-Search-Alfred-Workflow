@@ -1,6 +1,8 @@
 # Movies (an Alfred workflow)
 An Alfred workflow to search for a movie and get a few ratings.
 
+![Sample](https://raw.githubusercontent.com/tmcknight/Movies-Alfred-Workflow/master/example.gif)
+
 ## Usage
 - Download and install the workflow.
 - If you want to use your own API key, type 'movieapi' to set your [TMDb API key](https://www.themoviedb.org/documentation/api).
@@ -9,6 +11,7 @@ An Alfred workflow to search for a movie and get a few ratings.
 ## Credits
 - The movie details come from [TMDb](http://themoviedb.org/) and the [OMDb API](http://www.omdbapi.com).
 - Built using deanishe's [helper library](https://github.com/deanishe/alfred-workflow) for Alfred workflow development.
+- Uses [Mako Templates](http://www.makotemplates.org).
 - I love [Alfred](http://alfredapp.com/)!
 
 ## License
