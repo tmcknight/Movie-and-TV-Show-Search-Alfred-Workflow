@@ -3,6 +3,7 @@ import urllib
 import re
 import argparse
 from workflow import Workflow, ICON_WEB, ICON_USER, ICON_WARNING, ICON_GROUP, web, PasswordNotFound
+from mako.template import Template
 
 DEFAULT_TMDB_API_KEY = '0ebad901a16d3bf7f947b0a8d1808c44'
 TMDB_API_URL = 'http://api.themoviedb.org/3/'
@@ -11,6 +12,8 @@ IMDB_URL = 'http://imdb.com/'
 YOUTUBE_WATCH_URL = 'http://youtube.com/watch?v='
 METACRITIC_SEARCH_URL = 'http://www.metacritic.com/search/movie/'
 ROTTEN_TOMATOES_SEARCH_URL = 'http://www.rottentomatoes.com/search/?search='
+
+log = None
 
 def main(wf):
 
@@ -141,7 +144,9 @@ def show_movie_info(movie):
     wf.add_item(title = '%s (%s)' % (movie['title'], movie['release_date'][:4]),
                 subtitle = u' \u2022 '.join(subtitleItems),
                 valid = True,
-                arg = IMDB_URL + 'title/' + omdb_info['imdbID'])
+                arg = "file://" + wf.workflowdir + '/movie.html')
+
+    #log.debug(wf.workflowdir)
 
     if omdb_info['imdbRating'] != 'N/A':
         wf.add_item(title = omdb_info['imdbRating'],
@@ -194,6 +199,27 @@ def show_movie_info(movie):
     wf.add_item(title=omdb_info['Actors'],
                       subtitle='Actors',
                       icon = ICON_GROUP)
+
+    generate_movie_html(omdb_info, movie)
+
+    return
+
+def generate_movie_html(omdb_info, tmdb_info):
+    movie_template = Template(filename='templates/movie.html', output_encoding = 'utf-8')
+    html = movie_template.render(
+            title = omdb_info['Title'],
+            backdrop_path = tmdb_info['backdrop_path'],
+            poster = tmdb_info['poster_path'],
+            production_company = tmdb_info['production_companies'][0]['name'],
+            genre = omdb_info['Genre'],
+            overview = tmdb_info['overview'],
+            release_date = omdb_info['Released'],
+            director = omdb_info['Director'],
+            actors = omdb_info['Actors']
+        )
+    with open("movie.html", "w") as text_file:
+        text_file.write(html)
+
     return
 
 def show_person_info(person):
@@ -207,4 +233,5 @@ def extract_popularity(result):
 
 if __name__ == u"__main__":
     wf = Workflow()
+    log = wf.logger
     sys.exit(wf.run(main))
