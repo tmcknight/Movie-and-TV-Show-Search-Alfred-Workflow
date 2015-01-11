@@ -78,10 +78,10 @@ def main(wf):
         results = web.get(url, params).json()
 
         if 'status_code' in results:
-            wf.add_item(title = 'No movie was found.')
+            wf.add_item(title = 'No movies were found.')
         elif 'results' in results:
     	    if not results['results']:
-        	    wf.add_item(title = 'No movie was found.')
+        	    wf.add_item(title = 'No movies were found.')
             results['results'].sort(key=extract_popularity, reverse = True)
             for item in results['results']:
                 mediaType = 'movie'
