@@ -217,7 +217,7 @@ def generate_movie_html(omdb_info, tmdb_info):
             director = omdb_info['Director'],
             actors = omdb_info['Actors']
         )
-    with open("movie.html", "w") as text_file:
+    with open("movie.html", "w+") as text_file:
         text_file.write(html)
 
     return
