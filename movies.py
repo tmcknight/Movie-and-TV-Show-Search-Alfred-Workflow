@@ -133,6 +133,10 @@ def get_omdb_info(imdb_id):
 def show_movie_info(movie):
     omdb_info = get_omdb_info(movie['imdb_id'])
 
+    if omdb_info['Response'] == 'False':
+        wf.add_item(title='Movie details not found.')
+        return
+
     wf.add_item(title = '%s (%s)' % (movie['title'], movie['release_date'][:4]),
                 subtitle = get_subtitle(omdb_info),
                 valid = True,
