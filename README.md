@@ -3,7 +3,7 @@ An Alfred workflow to search for a movie and get a few ratings.
 
 ## Usage
 - Download and install the workflow.
-- Type 'movieapi' to set your [TMDb API key](https://www.themoviedb.org/documentation/api).
+- If you want to use your own API key, type 'movieapi' to set your [TMDb API key](https://www.themoviedb.org/documentation/api).
 - Type 'movie', then a movie title. Hit ENTER on an item to get info.
 
 ## Credits

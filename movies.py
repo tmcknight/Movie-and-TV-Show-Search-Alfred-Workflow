@@ -4,6 +4,7 @@ import re
 import argparse
 from workflow import Workflow, ICON_WEB, ICON_USER, ICON_WARNING, ICON_GROUP, web, PasswordNotFound
 
+DEFAULT_TMDB_API_KEY = '0ebad901a16d3bf7f947b0a8d1808c44'
 TMDB_API_URL = 'http://api.themoviedb.org/3/'
 OMDB_API_URL = 'http://www.omdbapi.com/'
 IMDB_URL = 'http://imdb.com/'
@@ -48,12 +49,13 @@ def main(wf):
     try:
         api_key = wf.get_password('tmdb_api_key')
     except PasswordNotFound:  # API key has not yet been set
-        wf.add_item('No TMDb API key set.',
-                    'Please use \'movieapi\' to set your TMDb API key.',
-                    valid=False,
-                    icon=ICON_WARNING)
-        wf.send_feedback()
-        return 0
+        api_key = DEFAULT_TMDB_API_KEY
+        #wf.add_item('No TMDb API key set.',
+        #            'Please use \'movieapi\' to set your TMDb API key.',
+        #            valid=False,
+        #            icon=ICON_WARNING)
+        #wf.send_feedback()
+        #return 0
 
 
     m = re.match('([mp])\:([0-9]*)', query)
