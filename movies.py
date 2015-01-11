@@ -137,9 +137,13 @@ def show_movie_info(movie):
         wf.add_item(title='Movie details not found.')
         return
 
+    #get poster
+    urllib.urlretrieve("https://image.tmdb.org/t/p/w92" + movie['poster_path'], "poster.jpg")
+
     wf.add_item(title = '%s (%s)' % (movie['title'], movie['release_date'][:4]),
                 subtitle = get_subtitle(omdb_info),
                 valid = True,
+                icon = "poster.jpg",
                 arg = "file://" + wf.workflowdir + '/movie.html')
 
     #log.debug(wf.workflowdir)
