@@ -237,7 +237,10 @@ def get_subtitle(omdb_info):
     if omdb_info['Genre'] != 'N/A':
         subtitleItems.append(omdb_info['Genre'])
     if omdb_info['Rated'] != 'N/A':
-        subtitleItems.append('Rated ' + omdb_info['Rated'])
+    	rating_string = omdb_info['Rated']
+    	if "rated" not in rating_string.lower():
+    		rating_string = 'Rated ' + rating_string
+        subtitleItems.append(rating_string)
     return u' \u2022 '.join(subtitleItems)
 
 def show_person_info(person):
