@@ -63,11 +63,14 @@ def main(wf):
 
     m = re.match('([mp])\:([0-9]*)', query)
     if query[:2] == 'm:' and m.group(2):
-        item = get_tmdb_info(m.group(1), m.group(2), api_key)
-        if m.group(1) == 'm':
-            show_movie_info(item)
-        elif m.group(1) == 'p':
-            show_person_info(item)
+    	try:
+        	item = get_tmdb_info(m.group(1), m.group(2), api_key)
+        	if m.group(1) == 'm':
+	            show_movie_info(item)
+	        elif m.group(1) == 'p':
+	            show_person_info(item)
+    	except AttributeError, e:
+    		wf.add_item('The movie was not found.')
     else:
         def wrapper():
             return get_tmdb_configuration(api_key)
