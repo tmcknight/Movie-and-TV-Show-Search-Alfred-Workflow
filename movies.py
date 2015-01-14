@@ -1,3 +1,6 @@
+# encoding: utf-8
+from __future__ import unicode_literals
+
 import sys
 import urllib
 import re
@@ -77,7 +80,7 @@ def main(wf):
 
         configuration = wf.cached_data('tmdbconfig', wrapper, max_age=604800)
         url = TMDB_API_URL + 'search/movie'
-        params = dict(api_key = api_key, query = urllib.quote(query), search_type='ngram')
+        params = dict(api_key = api_key, query = query, search_type='ngram')
         results = web.get(url, params).json()
 
         if 'status_code' in results:
@@ -99,19 +102,13 @@ def main(wf):
                                     valid = False,
                                     autocomplete = 'm:' + str(item['id'])
                                     )
-                    #if item['poster_path']:
-                    #    movie.icon = configuration['images']['base_url'] + configuration['images']['poster_sizes'][0] + item['poster_path']
                 elif mediaType == 'person':
                     person = wf.add_item(title = '%s' % (item['name']),
                                      arg = str(item['id']),
                                      valid = False,
-                                     autocomplete = 'p:' + str(item['id'])
+                                     autocomplete = 'p:' + str(item['id']),
+                                     icon = ICON_USER
                                      )
-                    #if item['profile_path']:
-                    #    person.icon = configuration['images']['base_url'] + configuration['images']['poster_sizes'][0] + item['profile_path']
-                    #else:
-                    person.icon = ICON_USER
-
     wf.send_feedback()
 
 def get_tmdb_configuration(api_key):
@@ -186,7 +183,7 @@ def show_movie_info(movie):
                 break
         if trailer:
             wf.add_item(title = 'Watch Trailer',
-                        subtitle = trailer['site'] + u' \u2022 ' + str(trailer['size']) + 'p',
+                        subtitle = trailer['site'] + ' \u2022 ' + str(trailer['size']) + 'p',
                         valid = True,
                         arg = YOUTUBE_WATCH_URL + trailer['key'],
                         icon = 'img/youtube.png')
@@ -241,18 +238,15 @@ def get_subtitle(omdb_info):
     	if "rated" not in rating_string.lower():
     		rating_string = 'Rated ' + rating_string
         subtitleItems.append(rating_string)
-    return u' \u2022 '.join(subtitleItems)
+    return ' \u2022 '.join(subtitleItems)
 
 def show_person_info(person):
     return
 
 def extract_popularity(result):
-    try:
-        return result['popularity']
-    except KeyError:
-        return '0'
+	result.get('popularity', '0')
 
-if __name__ == u"__main__":
+if __name__ == "__main__":
     wf = Workflow()
     log = wf.logger
     sys.exit(wf.run(main))
