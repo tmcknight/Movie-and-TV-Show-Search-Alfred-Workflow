@@ -26,14 +26,12 @@ def main(wf):
 
     api_key = DEFAULT_TMDB_API_KEY
 
-    m = re.match('([mp])\:([0-9]*)', query)
+    m = re.match('([m])\:([0-9]*)', query)
     if query[:2] == 'm:' and m.group(2):
     	try:
         	item = get_tmdb_info(m.group(1), m.group(2), api_key)
         	if m.group(1) == 'm':
 	            show_movie_info(item)
-	        elif m.group(1) == 'p':
-	            show_person_info(item)
     	except AttributeError, e:
     		wf.add_item('The movie was not found.')
     else:
@@ -64,13 +62,6 @@ def main(wf):
                                     valid = False,
                                     autocomplete = 'm:' + str(item['id'])
                                     )
-                elif mediaType == 'person':
-                    person = wf.add_item(title = '%s' % (item['name']),
-                                     arg = str(item['id']),
-                                     valid = False,
-                                     autocomplete = 'p:' + str(item['id']),
-                                     icon = ICON_USER
-                                     )
     wf.send_feedback()
 
 def get_tmdb_configuration(api_key):
@@ -82,8 +73,6 @@ def get_tmdb_info(item_type, item_id, api_key):
     url = TMDB_API_URL
     if item_type == 'm':
         url += 'movie/' + item_id
-    elif item_type == 'p':
-        url += 'person/' + item_id
     params = dict(api_key = api_key, language = 'en', append_to_response = 'videos')
     return web.get(url, params).json()
 
@@ -201,9 +190,6 @@ def get_subtitle(omdb_info):
     		rating_string = 'Rated ' + rating_string
         subtitleItems.append(rating_string)
     return ' \u2022 '.join(subtitleItems)
-
-def show_person_info(person):
-    return
 
 def extract_popularity(result):
 	result.get('popularity', '0')
