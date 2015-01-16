@@ -4,8 +4,7 @@ from __future__ import unicode_literals
 import sys
 import urllib
 import re
-import argparse
-from workflow import Workflow, ICON_WEB, ICON_USER, ICON_WARNING, ICON_GROUP, web, PasswordNotFound
+from workflow import Workflow, ICON_WEB, ICON_USER, ICON_WARNING, ICON_GROUP, web
 from mako.template import Template
 
 DEFAULT_TMDB_API_KEY = '0ebad901a16d3bf7f947b0a8d1808c44'
@@ -25,44 +24,7 @@ def main(wf):
     else:
         query = None
 
-
-    # build argument parser to parse script args and collect their
-    # values
-    parser = argparse.ArgumentParser()
-    # add an optional (nargs='?') --apikey argument and save its
-    # value to 'apikey' (dest). This will be called from a separate "Run Script"
-    # action with the API key
-    parser.add_argument('--setkey', dest='apikey', nargs='?', default=None)
-    # add an optional query and save it to 'query'
-    parser.add_argument('query', nargs='?', default=None)
-    # parse the script's arguments
-    args = parser.parse_args(wf.args)
-
-    ####################################################################
-    # Save the provided API key
-    ####################################################################
-
-    # decide what to do based on arguments
-    if args.apikey:  # Script was passed an API key
-        # save the key
-        wf.save_password('tmdb_api_key', args.apikey)
-        return 0  # 0 means script exited cleanly
-
-    ####################################################################
-    # Check that we have an API key saved
-    ####################################################################
-
-    try:
-        api_key = wf.get_password('tmdb_api_key')
-    except PasswordNotFound:  # API key has not yet been set
-        api_key = DEFAULT_TMDB_API_KEY
-        #wf.add_item('No TMDb API key set.',
-        #            'Please use \'movieapi\' to set your TMDb API key.',
-        #            valid=False,
-        #            icon=ICON_WARNING)
-        #wf.send_feedback()
-        #return 0
-
+    api_key = DEFAULT_TMDB_API_KEY
 
     m = re.match('([mp])\:([0-9]*)', query)
     if query[:2] == 'm:' and m.group(2):

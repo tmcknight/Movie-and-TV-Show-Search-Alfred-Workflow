@@ -8,17 +8,6 @@
 	<string>Internet</string>
 	<key>connections</key>
 	<dict>
-		<key>5CCA0E4A-73FF-463A-B117-8D716359B476</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>8C50A179-1A70-4A7D-9E89-B916A4F86DAF</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-			</dict>
-		</array>
 		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 		<array>
 			<dict>
@@ -35,17 +24,6 @@
 			<dict>
 				<key>destinationuid</key>
 				<string>94AAD4D7-660A-4698-8B47-847756748969</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-			</dict>
-		</array>
-		<key>C581DBA6-72FF-4C10-A448-143D74225620</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>5CCA0E4A-73FF-463A-B117-8D716359B476</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -112,69 +90,6 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>argumenttype</key>
-				<integer>0</integer>
-				<key>keyword</key>
-				<string>movieapi</string>
-				<key>subtext</key>
-				<string>Enter your TMDb API key and press ENTER</string>
-				<key>text</key>
-				<string>Set your TMDb API key</string>
-				<key>withspace</key>
-				<true/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.input.keyword</string>
-			<key>uid</key>
-			<string>C581DBA6-72FF-4C10-A448-143D74225620</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>escaping</key>
-				<integer>102</integer>
-				<key>script</key>
-				<string>python movies.py --setkey "{query}"</string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>5CCA0E4A-73FF-463A-B117-8D716359B476</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>lastpathcomponent</key>
-				<false/>
-				<key>onlyshowifquerypopulated</key>
-				<false/>
-				<key>output</key>
-				<integer>0</integer>
-				<key>removeextension</key>
-				<false/>
-				<key>sticky</key>
-				<false/>
-				<key>text</key>
-				<string>Your TMDb API key was saved</string>
-				<key>title</key>
-				<string>Saved API Key</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.output.notification</string>
-			<key>uid</key>
-			<string>8C50A179-1A70-4A7D-9E89-B916A4F86DAF</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>applescript</key>
 				<string>on alfred_script(q)
 	tell application "Alfred 2"		search "movie " &amp; q	end tell
@@ -207,22 +122,12 @@ end alfred_script</string>
 	<string></string>
 	<key>uidata</key>
 	<dict>
-		<key>5CCA0E4A-73FF-463A-B117-8D716359B476</key>
+		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 		<dict>
 			<key>ypos</key>
 			<real>130</real>
 		</dict>
-		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
-		<dict>
-			<key>ypos</key>
-			<real>250</real>
-		</dict>
 		<key>7383993A-C301-4ABD-B9A8-1E115F8F4573</key>
-		<dict>
-			<key>ypos</key>
-			<real>250</real>
-		</dict>
-		<key>8C50A179-1A70-4A7D-9E89-B916A4F86DAF</key>
 		<dict>
 			<key>ypos</key>
 			<real>130</real>
@@ -236,11 +141,6 @@ end alfred_script</string>
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
-		</dict>
-		<key>C581DBA6-72FF-4C10-A448-143D74225620</key>
-		<dict>
-			<key>ypos</key>
-			<real>130</real>
 		</dict>
 	</dict>
 	<key>webaddress</key>
