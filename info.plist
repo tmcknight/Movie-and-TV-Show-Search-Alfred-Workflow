@@ -30,17 +30,56 @@
 				<string></string>
 			</dict>
 		</array>
+		<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2F2D9399-94AC-4A44-99BE-993A4A623AC2</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
 	</dict>
 	<key>createdby</key>
 	<string>Tom McKnight</string>
 	<key>description</key>
-	<string>Search and get info on movies</string>
+	<string>Search and get info on movies or TV shows</string>
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>Movies</string>
+	<string>Movie and TV Search</string>
 	<key>objects</key>
 	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>plusspaces</key>
+				<false/>
+				<key>url</key>
+				<string>{query}</string>
+				<key>utf8</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -53,7 +92,7 @@
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
-				<string>python movies.py "{query}"</string>
+				<string>python media.py "movie" "{query}"</string>
 				<key>subtext</key>
 				<string>Search for "{query}"</string>
 				<key>title</key>
@@ -73,17 +112,29 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>plusspaces</key>
-				<false/>
-				<key>url</key>
-				<string>{query}</string>
-				<key>utf8</key>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>126</integer>
+				<key>keyword</key>
+				<string>tv</string>
+				<key>runningsubtext</key>
+				<string>Searching for "{query}"...</string>
+				<key>script</key>
+				<string>python media.py "tv" "{query}"</string>
+				<key>subtext</key>
+				<string>Search for "{query}"</string>
+				<key>title</key>
+				<string>Search TV Shows</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
 				<true/>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.action.openurl</string>
+			<string>alfred.workflow.input.scriptfilter</string>
 			<key>uid</key>
-			<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
+			<string>B8455555-F05D-4969-83C9-5DE09914B79D</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
@@ -117,20 +168,55 @@ end alfred_script</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>applescript</key>
+				<string>on alfred_script(q)
+	tell application "Alfred 2"		search "tv " &amp; q	end tell
+end alfred_script</string>
+				<key>cachescript</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.applescript</string>
+			<key>uid</key>
+			<string>2F2D9399-94AC-4A44-99BE-993A4A623AC2</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>text</key>
+				<string>Search tv shows for '{query}'</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string></string>
 	<key>uidata</key>
 	<dict>
+		<key>2F2D9399-94AC-4A44-99BE-993A4A623AC2</key>
+		<dict>
+			<key>ypos</key>
+			<real>320</real>
+		</dict>
 		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 		<dict>
 			<key>ypos</key>
-			<real>130</real>
+			<real>200</real>
 		</dict>
 		<key>7383993A-C301-4ABD-B9A8-1E115F8F4573</key>
 		<dict>
 			<key>ypos</key>
-			<real>130</real>
+			<real>200</real>
 		</dict>
 		<key>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</key>
 		<dict>
@@ -141,6 +227,16 @@ end alfred_script</string>
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
+		</dict>
+		<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
+		<dict>
+			<key>ypos</key>
+			<real>120</real>
+		</dict>
+		<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
+		<dict>
+			<key>ypos</key>
+			<real>320</real>
 		</dict>
 	</dict>
 	<key>webaddress</key>
