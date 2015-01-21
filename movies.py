@@ -95,9 +95,9 @@ def show_movie_info(movie):
                 subtitle = get_subtitle(omdb_info),
                 valid = True,
                 #icon = "poster.jpg",
-                arg = "file://" + wf.workflowdir + '/movie.html')
+                arg = "file://" + urllib.pathname2url(wf.workflowfile('movie.html')))
 
-    #log.debug(wf.workflowdir)
+    search = urllib.quote(movie['title'].encode('utf-8'))
 
     if omdb_info['imdbRating'] != 'N/A':
         wf.add_item(title = omdb_info['imdbRating'],
@@ -117,14 +117,14 @@ def show_movie_info(movie):
                     subtitle = 'Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' + omdb_info['tomatoFresh'] + ' fresh, ' + omdb_info['tomatoRotten'] + ' rotten)',
                     icon = tomatoIcon,
                     valid = True,
-                    arg = ROTTEN_TOMATOES_SEARCH_URL + '%s (%s)' % (movie['title'], movie['release_date'][:4]))
+                    arg = ROTTEN_TOMATOES_SEARCH_URL + search)
 
     if omdb_info['Metascore'] != 'N/A':
         wf.add_item(title = omdb_info['Metascore'],
                     subtitle = 'Metacritic',
                     icon = 'img/meta.png',
                     valid = True,
-                    arg = METACRITIC_SEARCH_URL + movie['title'] + '/results')
+                    arg = METACRITIC_SEARCH_URL + search + '/results')
 
     if movie['videos']['results']:
         trailer = None
