@@ -23,7 +23,7 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>94AAD4D7-660A-4698-8B47-847756748969</string>
+				<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -41,23 +41,6 @@
 	<string>Movies</string>
 	<key>objects</key>
 	<array>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>plusspaces</key>
-				<false/>
-				<key>url</key>
-				<string>{query}</string>
-				<key>utf8</key>
-				<true/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.openurl</string>
-			<key>uid</key>
-			<string>94AAD4D7-660A-4698-8B47-847756748969</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -84,6 +67,23 @@
 			<string>alfred.workflow.input.scriptfilter</string>
 			<key>uid</key>
 			<string>90677662-35FF-41CB-93F4-6758357932B1</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>plusspaces</key>
+				<false/>
+				<key>url</key>
+				<string>{query}</string>
+				<key>utf8</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
@@ -132,12 +132,12 @@ end alfred_script</string>
 			<key>ypos</key>
 			<real>130</real>
 		</dict>
-		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
+		<key>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</key>
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
-		<key>94AAD4D7-660A-4698-8B47-847756748969</key>
+		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
