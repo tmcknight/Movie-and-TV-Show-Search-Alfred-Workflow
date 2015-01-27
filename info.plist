@@ -60,7 +60,7 @@
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>Movie and TV Search</string>
+	<string>Movie and TV Show Search</string>
 	<key>objects</key>
 	<array>
 		<dict>
@@ -89,6 +89,14 @@
 				<integer>126</integer>
 				<key>keyword</key>
 				<string>movie</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>1</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
@@ -118,6 +126,14 @@
 				<integer>126</integer>
 				<key>keyword</key>
 				<string>tv</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>1</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
