@@ -36,6 +36,7 @@ def main(wf):
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
             item = get_tmdb_info(m.group(1), m.group(2), api_key)
+            log.debug('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
         except AttributeError, e:
@@ -107,6 +108,7 @@ def show_item_info(item, media_type):
         title_key = 'name'
         release_date_key = 'first_air_date'
     omdb_info = get_omdb_info(imdb_id)
+    log.debug('OMDb info retrieved.')
 
     if omdb_info['Response'] == 'False':
         wf.add_item(title='Details not found.')
@@ -116,7 +118,11 @@ def show_item_info(item, media_type):
     # urllib.urlretrieve("https://image.tmdb.org/t/p/w92" +
     # movie['poster_path'], "poster.jpg")
 
-    wf.add_item(title='%s (%s)' % (item[title_key], item[release_date_key][:4]),
+    title = item[title_key]
+    if item[release_date_key]:
+        title += ' (' + item[release_date_key][:4] + ')'
+
+    wf.add_item(title=title,
                 subtitle=get_subtitle(omdb_info),
                 valid=True,
                 # icon = "poster.jpg",
@@ -124,13 +130,27 @@ def show_item_info(item, media_type):
 
     search = urllib.quote_plus(item[title_key].encode('utf-8'), safe=':'.encode('utf-8'))
 
+    all_search_sites = []
+
+    #IMDb
+    search_url = IMDB_URL + 'title/' + omdb_info['imdbID']
+    all_search_sites.append(search_url)
     if omdb_info['imdbRating'] != 'N/A':
         wf.add_item(title=omdb_info['imdbRating'],
                     subtitle='IMDb (' + omdb_info['imdbVotes'] + " votes)",
                     icon='img/imdb.png',
                     valid=True,
-                    arg=IMDB_URL + 'title/' + omdb_info['imdbID'])
+                    arg=search_url)
+    else:
+        wf.add_item(title='IMDb',
+                    subtitle='Search IMDb for \'' + item[title_key] + '\'',
+                    icon='img/imdb.png',
+                    valid=True,
+                    arg=search_url)
 
+    #Rotten Tomatoes
+    search_url = ROTTEN_TOMATOES_SEARCH_URL + search
+    all_search_sites.append(search_url)
     if omdb_info['tomatoMeter'] != 'N/A':
         tomatoIcon = 'img/fresh.png'
         if omdb_info['tomatoImage'] == 'N/A':
@@ -139,18 +159,38 @@ def show_item_info(item, media_type):
             tomatoIcon = 'img/' + omdb_info['tomatoImage'] + '.png'
 
         wf.add_item(title=omdb_info['tomatoMeter'] + '%',
-                    subtitle='Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' + omdb_info[
-            'tomatoFresh'] + ' fresh, ' + omdb_info['tomatoRotten'] + ' rotten)',
-            icon=tomatoIcon,
-            valid=True,
-            arg=ROTTEN_TOMATOES_SEARCH_URL + search)
+                    subtitle='Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' + omdb_info['tomatoFresh'] + ' fresh, ' + omdb_info['tomatoRotten'] + ' rotten)',
+                    icon=tomatoIcon,
+                    valid=True,
+                    arg=search_url)
+    else:
+        wf.add_item(title='Rotten Tomatoes',
+                    subtitle='Search Rotten Tomatoes for \'' + item[title_key] + '\'',
+                    icon='img/fresh.png',
+                    valid=True,
+                    arg=search_url)
 
+    #Metacritic
+    search_url = METACRITIC_SEARCH_URL + search + '/results'
+    all_search_sites.append(search_url)
     if omdb_info['Metascore'] != 'N/A':
         wf.add_item(title=omdb_info['Metascore'],
                     subtitle='Metacritic',
                     icon='img/meta.png',
                     valid=True,
-                    arg=METACRITIC_SEARCH_URL + search + '/results')
+                    arg=search_url)
+    else:
+        wf.add_item(title='Metacritic',
+                    subtitle='Search Metacritic for \'' + item[title_key] + '\'',
+                    icon='img/meta.png',
+                    valid=True,
+                    arg=search_url)
+
+    wf.add_item(title='Search',
+                subtitle='Search for \'' + item[title_key] + '\' on all rating sites.',
+                icon='img/ratingsites.png',
+                valid=True,
+                arg='||'.join(all_search_sites))
 
     if item['videos']['results']:
         trailer = None

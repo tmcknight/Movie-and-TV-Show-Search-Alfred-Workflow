@@ -23,7 +23,7 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
+				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -34,7 +34,7 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
+				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -66,17 +66,21 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>plusspaces</key>
-				<false/>
-				<key>url</key>
-				<string>{query}</string>
-				<key>utf8</key>
-				<true/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string>import webbrowser
+
+urls = "{query}".split("||")
+for url in  urls:
+	webbrowser.open_new_tab(url)</string>
+				<key>type</key>
+				<integer>3</integer>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.action.openurl</string>
+			<string>alfred.workflow.action.script</string>
 			<key>uid</key>
-			<string>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</string>
+			<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
@@ -224,6 +228,11 @@ end alfred_script</string>
 			<key>ypos</key>
 			<real>320</real>
 		</dict>
+		<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
+		<dict>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
 		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 		<dict>
 			<key>ypos</key>
@@ -233,11 +242,6 @@ end alfred_script</string>
 		<dict>
 			<key>ypos</key>
 			<real>200</real>
-		</dict>
-		<key>89D5F58D-D2A1-4AD8-8ABF-90C821B90538</key>
-		<dict>
-			<key>ypos</key>
-			<real>10</real>
 		</dict>
 		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 		<dict>
