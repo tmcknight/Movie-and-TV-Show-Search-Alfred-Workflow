@@ -126,7 +126,7 @@ def show_item_info(item, media_type):
                 subtitle=get_subtitle(omdb_info),
                 valid=True,
                 # icon = "poster.jpg",
-                arg="file://" + urllib.pathname2url(wf.workflowfile('item.html')))
+                arg="file://" + urllib.pathname2url(wf.cachefile('item.html')))
 
     search = urllib.quote_plus(item[title_key].encode('utf-8'), safe=':'.encode('utf-8'))
 
@@ -242,7 +242,7 @@ def generate_item_html(omdb_info, tmdb_info):
         actors=omdb_info['Actors'],
         genre=get_subtitle(omdb_info)
     )
-    with open("item.html", "w+") as text_file:
+    with open(wf.cachefile("item.html"), "w+") as text_file:
         text_file.write(html)
 
     return
