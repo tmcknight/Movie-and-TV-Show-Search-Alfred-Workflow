@@ -45,11 +45,17 @@ def main(wf):
         def wrapper():
             return get_tmdb_configuration(api_key)
 
-        configuration = wf.cached_data('tmdbconfig', wrapper, max_age=604800)
-        url = TMDB_API_URL + 'search/' + media_type
-        params = dict(api_key=api_key, query=query, search_type='ngram')
-        results = web.get(url, params).json()
-
+        try:
+            configuration = wf.cached_data('tmdbconfig', wrapper, max_age=604800)
+            url = TMDB_API_URL + 'search/' + media_type
+            params = dict(api_key=api_key, query=query, search_type='ngram')
+            results = web.get(url, params).json()
+        except Exception, e:
+            wf.add_item('Uh oh... something went wrong',
+                subtitle='Please check your internet connection.')
+            wf.send_feedback()
+            return 0
+        
         if 'status_code' in results:
             wf.add_item(title='Nothing was found.')
         elif 'results' in results:
