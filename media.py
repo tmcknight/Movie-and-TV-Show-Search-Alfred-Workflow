@@ -192,12 +192,6 @@ def show_item_info(item, media_type):
                     valid=True,
                     arg=search_url)
 
-    wf.add_item(title='Search',
-                subtitle='Search for \'' + item[title_key] + '\' on all rating sites.',
-                icon='img/ratingsites.png',
-                valid=True,
-                arg='||'.join(all_search_sites))
-
     if item['videos']['results']:
         trailer = None
         for video in item['videos']['results']:
@@ -211,6 +205,14 @@ def show_item_info(item, media_type):
                         valid=True,
                         arg=YOUTUBE_WATCH_URL + trailer['key'],
                         icon='img/youtube.png')
+
+            all_search_sites.append(YOUTUBE_WATCH_URL + trailer['key'])
+
+    wf.add_item(title='Search',
+                subtitle='Search for \'' + item[title_key] + '\' on all rating sites.',
+                icon='img/ratingsites.png',
+                valid=True,
+                arg='||'.join(all_search_sites))
 
     wf.add_item(title=omdb_info['Director'],
                 subtitle='Director',
