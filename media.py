@@ -176,6 +176,17 @@ def show_item_info(item, media_type):
                     valid=True,
                     arg=search_url)
 
+    if omdb_info['tomatoUserMeter'] != 'N/A':
+        tomatoUserIcon = 'img/rtliked.png'
+        if int(omdb_info['tomatoUserMeter']) < 60:
+            tomatoUserIcon = 'img/rtdisliked.png'
+
+        wf.add_item(title=omdb_info['tomatoUserMeter'] + '%',
+                    subtitle='Rotten Tomatoes Audience Score (' + omdb_info['tomatoUserReviews'] + ' reviews, ' + omdb_info['tomatoUserRating'] + ' avg rating)',
+                    icon=tomatoUserIcon,
+                    valid=True,
+                    arg=search_url)
+
     #Metacritic
     search_url = METACRITIC_SEARCH_URL + search + '/results'
     all_search_sites.append(search_url)
