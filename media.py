@@ -170,11 +170,13 @@ def show_item_info(item, media_type):
                     valid=True,
                     arg=search_url)
     else:
-        wf.add_item(title='Rotten Tomatoes',
-                    subtitle='Search Rotten Tomatoes for \'' + item[title_key] + '\'',
-                    icon='img/fresh.png',
-                    valid=True,
-                    arg=search_url)
+        for rating in omdb_info['Ratings']:
+            if rating['Source'] == 'Rotten Tomatoes':
+                wf.add_item(title=rating['Value'],
+                            subtitle='Rotten Tomatoes',
+                            icon='img/fresh.png',
+                            valid=True,
+                            arg=search_url)
 
     if omdb_info['tomatoUserMeter'] != 'N/A':
         tomatoUserIcon = 'img/rtliked.png'
