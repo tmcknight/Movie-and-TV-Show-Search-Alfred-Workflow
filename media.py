@@ -1,6 +1,7 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
+import os
 import sys
 import urllib
 import re
@@ -55,7 +56,7 @@ def main(wf):
                 subtitle='Please check your internet connection.')
             wf.send_feedback()
             return 0
-        
+
         if 'status_code' in results:
             wf.add_item(title='Nothing was found.')
         elif 'results' in results:
@@ -100,7 +101,7 @@ def get_tmdb_info(item_type, item_id, api_key):
 
 def get_omdb_info(imdb_id):
     url = OMDB_API_URL
-    params = dict(i=imdb_id, tomatoes=True, apikey='1bf8d40a')
+    params = dict(i=imdb_id, tomatoes=True, apikey=os.environ['omdb_api_key'])
     return web.get(url, params).json()
 
 
