@@ -1,13 +1,6 @@
 # Movie and TV Show Search (an Alfred workflow)
 An Alfred workflow to search for a movie or tv show and get a few ratings.
 
----
-
-### Update (May, 2017)
-Sadly, the OMDb API (on which this workflow relies) has gone private. Feel free to modify the code to add your own OMDb API key, but I will not be making any more updates to this workflow.
-
----
-
 ![Sample](https://raw.githubusercontent.com/tmcknight/Movies-Alfred-Workflow/master/example.gif)
 
 ## Usage

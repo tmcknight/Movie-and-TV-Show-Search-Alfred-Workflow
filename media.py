@@ -100,7 +100,7 @@ def get_tmdb_info(item_type, item_id, api_key):
 
 def get_omdb_info(imdb_id):
     url = OMDB_API_URL
-    params = dict(i=imdb_id, tomatoes=True)
+    params = dict(i=imdb_id, tomatoes=True, apikey='1bf8d40a')
     return web.get(url, params).json()
 
 
