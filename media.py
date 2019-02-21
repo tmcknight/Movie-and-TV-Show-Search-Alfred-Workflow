@@ -147,7 +147,8 @@ def show_item_info(item, media_type):
                     subtitle='IMDb (' + omdb_info['imdbVotes'] + " votes)",
                     icon='img/imdb.png',
                     valid=True,
-                    arg=search_url)
+                    arg=search_url,
+                    copytext=omdb_info['imdbID'])
     else:
         wf.add_item(title='IMDb',
                     subtitle='Search IMDb for \'' + item[title_key] + '\'',
