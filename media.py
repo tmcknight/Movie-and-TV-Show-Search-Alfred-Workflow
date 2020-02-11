@@ -66,11 +66,11 @@ def main(wf):
             for item in results['results']:
                 if media_type == 'movie':
                     title = item['title']
-                    if item['release_date']:
+                    if item.get('release_date', 0):
                         title += ' (' + item['release_date'][:4] + ')'
                 else:
                     title = item['name']
-                    if item['first_air_date']:
+                    if item.get('first_air_date', 0):
                         title += ' (' + item['first_air_date'][:4] + ')'
                 item = wf.add_item(title=title,
                                    arg=str(item['id']),
