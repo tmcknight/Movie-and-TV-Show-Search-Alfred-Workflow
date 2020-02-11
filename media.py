@@ -135,7 +135,7 @@ def show_item_info(item, media_type):
                 # icon = "poster.jpg",
                 arg="file://" + urllib.pathname2url(wf.cachefile('item.html')))
 
-    search = urllib.quote_plus(item[title_key].encode('utf-8'), safe=':'.encode('utf-8'))
+    search = urllib.quote(item[title_key].encode('utf-8'), safe=':'.encode('utf-8'))
 
     all_search_sites = []
 
