@@ -9,10 +9,10 @@ An Alfred workflow to search for a movie or tv show and get a few ratings.
 - Type 'tv', then a tv show title. Hit ENTER on an item to get info.
 
 ## Credits
-- The movie/tv details come from [TMDb](http://themoviedb.org/) and the [OMDb API](http://www.omdbapi.com).
+- The movie/tv details come from [TMDb](https://themoviedb.org/) and the [OMDb API](https://www.omdbapi.com).
 - Built using deanishe's [helper library](https://github.com/deanishe/alfred-workflow) for Alfred workflow development.
-- Uses [Mako Templates](http://www.makotemplates.org).
-- I love [Alfred](http://alfredapp.com/)!
+- Uses [Mako Templates](https://www.makotemplates.org).
+- I love [Alfred](https://alfredapp.com/)!
 
 ## License
-This workflow is released under the [MIT Licence](http://opensource.org/licenses/MIT).
+This workflow is released under the [MIT Licence](https://opensource.org/licenses/MIT).
