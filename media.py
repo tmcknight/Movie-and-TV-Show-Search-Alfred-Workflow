@@ -9,12 +9,12 @@ from workflow import Workflow, ICON_WEB, ICON_USER, ICON_WARNING, ICON_GROUP, we
 from mako.template import Template
 
 DEFAULT_TMDB_API_KEY = '0ebad901a16d3bf7f947b0a8d1808c44'
-TMDB_API_URL = 'http://api.themoviedb.org/3/'
-OMDB_API_URL = 'http://www.omdbapi.com/'
-IMDB_URL = 'http://imdb.com/'
-YOUTUBE_WATCH_URL = 'http://youtube.com/watch?v='
-METACRITIC_SEARCH_URL = 'http://metacritic.com/search/'
-ROTTEN_TOMATOES_SEARCH_URL = 'http://rottentomatoes.com/search/?search='
+TMDB_API_URL = 'https://api.themoviedb.org/3/'
+OMDB_API_URL = 'https://www.omdbapi.com/'
+IMDB_URL = 'https://imdb.com/'
+YOUTUBE_WATCH_URL = 'https://youtube.com/watch?v='
+METACRITIC_SEARCH_URL = 'https://metacritic.com/search/'
+ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
 
 log = None
 
