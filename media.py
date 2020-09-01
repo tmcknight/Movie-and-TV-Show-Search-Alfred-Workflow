@@ -15,6 +15,7 @@ IMDB_URL = 'https://imdb.com/'
 YOUTUBE_WATCH_URL = 'https://youtube.com/watch?v='
 METACRITIC_SEARCH_URL = 'https://metacritic.com/search/'
 ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
+LETTERBOXD_URL = 'https://letterboxd.com/imdb/'
 
 log = None
 
@@ -53,7 +54,7 @@ def main(wf):
             results = web.get(url, params).json()
         except Exception, e:
             wf.add_item('Uh oh... something went wrong',
-                subtitle='Please check your internet connection.')
+                        subtitle='Please check your internet connection.')
             wf.send_feedback()
             return 0
 
@@ -139,7 +140,7 @@ def show_item_info(item, media_type):
 
     all_search_sites = []
 
-    #IMDb
+    # IMDb
     search_url = IMDB_URL + 'title/' + omdb_info['imdbID']
     all_search_sites.append(search_url)
     if omdb_info['imdbRating'] != 'N/A':
@@ -156,7 +157,7 @@ def show_item_info(item, media_type):
                     valid=True,
                     arg=search_url)
 
-    #Rotten Tomatoes
+    # Rotten Tomatoes
     search_url = ROTTEN_TOMATOES_SEARCH_URL + search
     all_search_sites.append(search_url)
     if omdb_info['tomatoMeter'] != 'N/A':
@@ -167,7 +168,9 @@ def show_item_info(item, media_type):
             tomatoIcon = 'img/' + omdb_info['tomatoImage'] + '.png'
 
         wf.add_item(title=omdb_info['tomatoMeter'] + '%',
-                    subtitle='Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' + omdb_info['tomatoFresh'] + ' fresh, ' + omdb_info['tomatoRotten'] + ' rotten)',
+                    subtitle='Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' +
+                    omdb_info['tomatoFresh'] + ' fresh, ' +
+                    omdb_info['tomatoRotten'] + ' rotten)',
                     icon=tomatoIcon,
                     valid=True,
                     arg=search_url)
@@ -191,7 +194,7 @@ def show_item_info(item, media_type):
                     valid=True,
                     arg=search_url)
 
-    #Metacritic
+    # Metacritic
     search_url = METACRITIC_SEARCH_URL + search + '/results'
     all_search_sites.append(search_url)
     if omdb_info['Metascore'] != 'N/A':
@@ -206,6 +209,15 @@ def show_item_info(item, media_type):
                     icon='img/meta.png',
                     valid=True,
                     arg=search_url)
+
+    # Letterboxd
+    search_url = LETTERBOXD_URL + omdb_info['imdbID']
+    all_search_sites.append(search_url)
+    wf.add_item(title='Letterboxd',
+                subtitle='View \'' + item[title_key] + '\' on Letterboxd',
+                icon='img/letterboxd.png',
+                valid=True,
+                arg=search_url)
 
     if item['videos']['results']:
         trailer = None
@@ -287,6 +299,7 @@ def get_subtitle(omdb_info):
 
 def extract_popularity(result):
     result.get('popularity', '0')
+
 
 if __name__ == "__main__":
     wf = Workflow()
