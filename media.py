@@ -41,18 +41,19 @@ def main(wf):
             log.debug('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
-        except AttributeError, e:
+        except AttributeError as e:
             wf.add_item('The item was not found.')
     else:
         def wrapper():
             return get_tmdb_configuration(api_key)
 
         try:
-            configuration = wf.cached_data('tmdbconfig', wrapper, max_age=604800)
+            configuration = wf.cached_data(
+                'tmdbconfig', wrapper, max_age=604800)
             url = TMDB_API_URL + 'search/' + media_type
             params = dict(api_key=api_key, query=query, search_type='ngram')
             results = web.get(url, params).json()
-        except Exception, e:
+        except Exception as e:
             wf.add_item('Uh oh... something went wrong',
                         subtitle='Please check your internet connection.')
             wf.send_feedback()
@@ -136,7 +137,8 @@ def show_item_info(item, media_type):
                 # icon = "poster.jpg",
                 arg="file://" + urllib.pathname2url(wf.cachefile('item.html')))
 
-    search = urllib.quote(item[title_key].encode('utf-8'), safe=':'.encode('utf-8'))
+    search = urllib.quote(item[title_key].encode(
+        'utf-8'), safe=':'.encode('utf-8'))
 
     all_search_sites = []
 
@@ -159,6 +161,8 @@ def show_item_info(item, media_type):
 
     # Rotten Tomatoes
     search_url = ROTTEN_TOMATOES_SEARCH_URL + search
+    if omdb_info['tomatoURL']:
+        search_url = omdb_info['tomatoURL']
     all_search_sites.append(search_url)
     if omdb_info['tomatoMeter'] != 'N/A':
         tomatoIcon = 'img/fresh.png'
@@ -189,7 +193,9 @@ def show_item_info(item, media_type):
             tomatoUserIcon = 'img/rtdisliked.png'
 
         wf.add_item(title=omdb_info['tomatoUserMeter'] + '%',
-                    subtitle='Rotten Tomatoes Audience Score (' + omdb_info['tomatoUserReviews'] + ' reviews, ' + omdb_info['tomatoUserRating'] + ' avg rating)',
+                    subtitle='Rotten Tomatoes Audience Score (' + omdb_info['tomatoUserReviews'] +
+                    ' reviews, ' +
+                    omdb_info['tomatoUserRating'] + ' avg rating)',
                     icon=tomatoUserIcon,
                     valid=True,
                     arg=search_url)
@@ -205,7 +211,8 @@ def show_item_info(item, media_type):
                     arg=search_url)
     else:
         wf.add_item(title='Metacritic',
-                    subtitle='Search Metacritic for \'' + item[title_key] + '\'',
+                    subtitle='Search Metacritic for \'' +
+                    item[title_key] + '\'',
                     icon='img/meta.png',
                     valid=True,
                     arg=search_url)
@@ -236,7 +243,8 @@ def show_item_info(item, media_type):
             all_search_sites.append(YOUTUBE_WATCH_URL + trailer['key'])
 
     wf.add_item(title='Search',
-                subtitle='Search for \'' + item[title_key] + '\' on all rating sites.',
+                subtitle='Search for \'' +
+                item[title_key] + '\' on all rating sites.',
                 icon='img/ratingsites.png',
                 valid=True,
                 arg='||'.join(all_search_sites))
