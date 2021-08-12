@@ -7,9 +7,11 @@
 # Created on 2014-02-15
 #
 
-"""Lightweight HTTP library with a requests-like interface."""
+"""
+A lightweight HTTP library with a requests-like interface.
+"""
 
-from __future__ import absolute_import, print_function
+from __future__ import print_function
 
 import codecs
 import json
@@ -22,13 +24,10 @@ import string
 import unicodedata
 import urllib
 import urllib2
-import urlparse
 import zlib
 
-__version__ = open(os.path.join(os.path.dirname(__file__), 'version')).read()
 
-USER_AGENT = (u'Alfred-Workflow/' + __version__ +
-              ' (+http://www.deanishe.net/alfred-workflow)')
+USER_AGENT = u'Alfred-Workflow/1.11 (http://www.deanishe.net)'
 
 # Valid characters for multipart form data boundaries
 BOUNDARY_CHARS = string.digits + string.ascii_letters
@@ -79,12 +78,10 @@ RESPONSES = {
 
 
 def str_dict(dic):
-    """Convert keys and values in ``dic`` into UTF-8-encoded :class:`str`.
+    """Convert keys and values in ``dic`` into UTF-8-encoded :class:`str`
 
-    :param dic: Mapping of Unicode strings
-    :type dic: dict
-    :returns: Dictionary containing only UTF-8 strings
-    :rtype: dict
+    :param dic: :class:`dict` of Unicode strings
+    :returns: :class:`dict`
 
     """
     if isinstance(dic, CaseInsensitiveDictionary):
@@ -101,19 +98,17 @@ def str_dict(dic):
 
 
 class NoRedirectHandler(urllib2.HTTPRedirectHandler):
-    """Prevent redirections."""
+    """Prevent redirections"""
 
     def redirect_request(self, *args):
-        """Ignore redirect."""
         return None
 
 
 # Adapted from https://gist.github.com/babakness/3901174
 class CaseInsensitiveDictionary(dict):
-    """Dictionary with caseless key search.
-
-    Enables case insensitive searching while preserving case sensitivity
-    when keys are listed, ie, via keys() or items() methods.
+    """
+    Dictionary that enables case insensitive searching while preserving
+    case sensitivity when keys are listed, ie, via keys() or items() methods.
 
     Works by storing a lowercase version of the key as the new key and
     stores the original key-value pair as the key's value
@@ -122,7 +117,7 @@ class CaseInsensitiveDictionary(dict):
     """
 
     def __init__(self, initval=None):
-        """Create new case-insensitive dictionary."""
+
         if isinstance(initval, dict):
             for key, value in initval.iteritems():
                 self.__setitem__(key, value)
@@ -141,7 +136,6 @@ class CaseInsensitiveDictionary(dict):
         return dict.__setitem__(self, key.lower(), {'key': key, 'val': value})
 
     def get(self, key, default=None):
-        """Return value for case-insensitive key or default."""
         try:
             v = dict.__getitem__(self, key.lower())
         except KeyError:
@@ -150,55 +144,36 @@ class CaseInsensitiveDictionary(dict):
             return v['val']
 
     def update(self, other):
-        """Update values from other ``dict``."""
         for k, v in other.items():
             self[k] = v
 
     def items(self):
-        """Return ``(key, value)`` pairs."""
         return [(v['key'], v['val']) for v in dict.itervalues(self)]
 
     def keys(self):
-        """Return original keys."""
         return [v['key'] for v in dict.itervalues(self)]
 
     def values(self):
-        """Return all values."""
         return [v['val'] for v in dict.itervalues(self)]
 
     def iteritems(self):
-        """Iterate over ``(key, value)`` pairs."""
         for v in dict.itervalues(self):
             yield v['key'], v['val']
 
     def iterkeys(self):
-        """Iterate over original keys."""
         for v in dict.itervalues(self):
             yield v['key']
 
     def itervalues(self):
-        """Interate over values."""
         for v in dict.itervalues(self):
             yield v['val']
-
-
-class Request(urllib2.Request):
-    """Subclass of :class:`urllib2.Request` that supports custom methods."""
-
-    def __init__(self, *args, **kwargs):
-        """Create a new :class:`Request`."""
-        self._method = kwargs.pop('method', None)
-        urllib2.Request.__init__(self, *args, **kwargs)
-
-    def get_method(self):
-        return self._method.upper()
 
 
 class Response(object):
     """
     Returned by :func:`request` / :func:`get` / :func:`post` functions.
 
-    Simplified version of the ``Response`` object in the ``requests`` library.
+    A simplified version of the ``Response`` object in the ``requests`` library.
 
     >>> r = request('http://www.google.com')
     >>> r.status_code
@@ -213,16 +188,14 @@ class Response(object):
 
     """
 
-    def __init__(self, request, stream=False):
+    def __init__(self, request):
         """Call `request` with :mod:`urllib2` and process results.
 
-        :param request: :class:`Request` instance
-        :param stream: Whether to stream response or retrieve it all at once
-        :type stream: bool
+        :param request: :class:`urllib2.Request` instance
 
         """
+
         self.request = request
-        self._stream = stream
         self.url = None
         self.raw = None
         self._encoding = None
@@ -231,7 +204,6 @@ class Response(object):
         self.reason = None
         self.headers = CaseInsensitiveDictionary()
         self._content = None
-        self._content_loaded = False
         self._gzipped = False
 
         # Execute query
@@ -265,45 +237,28 @@ class Response(object):
             # Transfer-Encoding appears to not be used in the wild
             # (contrary to the HTTP standard), but no harm in testing
             # for it
-            if 'gzip' in headers.get('content-encoding', '') or \
-                    'gzip' in headers.get('transfer-encoding', ''):
+            if ('gzip' in headers.get('content-encoding', '') or
+                    'gzip' in headers.get('transfer-encoding', '')):
                 self._gzipped = True
-
-    @property
-    def stream(self):
-        """Whether response is streamed.
-
-        Returns:
-            bool: `True` if response is streamed.
-
-        """
-        return self._stream
-
-    @stream.setter
-    def stream(self, value):
-        if self._content_loaded:
-            raise RuntimeError("`content` has already been read from "
-                               "this Response.")
-
-        self._stream = value
 
     def json(self):
         """Decode response contents as JSON.
 
         :returns: object decoded from JSON
-        :rtype: list, dict or unicode
+        :rtype: :class:`list` / :class:`dict`
 
         """
+
         return json.loads(self.content, self.encoding or 'utf-8')
 
     @property
     def encoding(self):
-        """Text encoding of document or ``None``.
+        """Text encoding of document or ``None``
 
-        :returns: Text encoding if found.
-        :rtype: str or ``None``
+        :returns: :class:`str` or ``None``
 
         """
+
         if not self._encoding:
             self._encoding = self._get_encoding()
 
@@ -311,12 +266,13 @@ class Response(object):
 
     @property
     def content(self):
-        """Raw content of response (i.e. bytes).
+        """Raw content of response (i.e. bytes)
 
         :returns: Body of HTTP response
-        :rtype: str
+        :rtype: :class:`str`
 
         """
+
         if not self._content:
 
             # Decompress gzipped content
@@ -326,8 +282,6 @@ class Response(object):
 
             else:
                 self._content = self.raw.read()
-
-            self._content_loaded = True
 
         return self._content
 
@@ -339,9 +293,10 @@ class Response(object):
         itself, the encoded response body will be returned instead.
 
         :returns: Body of HTTP response
-        :rtype: unicode or str
+        :rtype: :class:`unicode` or :class:`str`
 
         """
+
         if self.encoding:
             return unicodedata.normalize('NFC', unicode(self.content,
                                                         self.encoding))
@@ -353,34 +308,28 @@ class Response(object):
         .. versionadded:: 1.6
 
         :param chunk_size: Number of bytes to read into memory
-        :type chunk_size: int
+        :type chunk_size: ``int``
         :param decode_unicode: Decode to Unicode using detected encoding
-        :type decode_unicode: bool
+        :type decode_unicode: ``Boolean``
         :returns: iterator
 
         """
-        if not self.stream:
-            raise RuntimeError("You cannot call `iter_content` on a "
-                               "Response unless you passed `stream=True`"
-                               " to `get()`/`post()`/`request()`.")
-
-        if self._content_loaded:
-            raise RuntimeError(
-                "`content` has already been read from this Response.")
 
         def decode_stream(iterator, r):
-            dec = codecs.getincrementaldecoder(r.encoding)(errors='replace')
+
+            decoder = codecs.getincrementaldecoder(r.encoding)(errors='replace')
 
             for chunk in iterator:
-                data = dec.decode(chunk)
+                data = decoder.decode(chunk)
                 if data:
                     yield data
 
-            data = dec.decode(b'', final=True)
-            if data:  # pragma: no cover
-                yield data
+            data = decoder.decode(b'', final=True)
+            if data:
+                yield data  # pragma: nocover
 
         def generate():
+
             if self._gzipped:
                 decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
 
@@ -402,19 +351,18 @@ class Response(object):
         return chunks
 
     def save_to_path(self, filepath):
-        """Save retrieved data to file at ``filepath``.
+        """Save retrieved data to file at ``filepath``
 
         .. versionadded: 1.9.6
 
         :param filepath: Path to save retrieved data.
 
         """
+
         filepath = os.path.abspath(filepath)
         dirname = os.path.dirname(filepath)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-
-        self.stream = True
 
         with open(filepath, 'wb') as fileobj:
             for data in self.iter_content():
@@ -425,6 +373,7 @@ class Response(object):
 
         error will be instance of :class:`urllib2.HTTPError`
         """
+
         if self.error is not None:
             raise self.error
         return
@@ -433,9 +382,10 @@ class Response(object):
         """Get encoding from HTTP headers or content.
 
         :returns: encoding or `None`
-        :rtype: unicode or ``None``
+        :rtype: ``unicode`` or ``None``
 
         """
+
         headers = self.raw.info()
         encoding = None
 
@@ -448,21 +398,20 @@ class Response(object):
                 encoding = param[8:]
                 break
 
-        if not self.stream:  # Try sniffing response content
-            # Encoding declared in document should override HTTP headers
-            if self.mimetype == 'text/html':  # sniff HTML headers
-                m = re.search(r"""<meta.+charset=["']{0,1}(.+?)["'].*>""",
-                              self.content)
-                if m:
-                    encoding = m.group(1)
+        # Encoding declared in document should override HTTP headers
+        if self.mimetype == 'text/html':  # sniff HTML headers
+            m = re.search("""<meta.+charset=["']{0,1}(.+?)["'].*>""",
+                          self.content)
+            if m:
+                encoding = m.group(1)
 
-            elif ((self.mimetype.startswith('application/')
-                   or self.mimetype.startswith('text/'))
-                  and 'xml' in self.mimetype):
-                m = re.search(r"""<?xml.+encoding=["'](.+?)["'][^>]*\?>""",
-                              self.content)
-                if m:
-                    encoding = m.group(1)
+        elif ((self.mimetype.startswith('application/') or
+               self.mimetype.startswith('text/')) and
+              'xml' in self.mimetype):
+            m = re.search("""<?xml.+encoding=["'](.+?)["'][^>]*\?>""",
+                          self.content)
+            if m:
+                encoding = m.group(1)
 
         # Format defaults
         if self.mimetype == 'application/json' and not encoding:
@@ -480,35 +429,31 @@ class Response(object):
 
 
 def request(method, url, params=None, data=None, headers=None, cookies=None,
-            files=None, auth=None, timeout=60, allow_redirects=False,
-            stream=False):
+            files=None, auth=None, timeout=60, allow_redirects=False):
     """Initiate an HTTP(S) request. Returns :class:`Response` object.
 
     :param method: 'GET' or 'POST'
-    :type method: unicode
+    :type method: ``unicode``
     :param url: URL to open
-    :type url: unicode
+    :type url: ``unicode``
     :param params: mapping of URL parameters
-    :type params: dict
+    :type params: :class:`dict`
     :param data: mapping of form data ``{'field_name': 'value'}`` or
         :class:`str`
-    :type data: dict or str
+    :type data: :class:`dict` or :class:`str`
     :param headers: HTTP headers
-    :type headers: dict
+    :type headers: :class:`dict`
     :param cookies: cookies to send to server
-    :type cookies: dict
+    :type cookies: :class:`dict`
     :param files: files to upload (see below).
-    :type files: dict
+    :type files: :class:`dict`
     :param auth: username, password
-    :type auth: tuple
+    :type auth: ``tuple``
     :param timeout: connection timeout limit in seconds
-    :type timeout: int
+    :type timeout: ``int``
     :param allow_redirects: follow redirections
-    :type allow_redirects: bool
-    :param stream: Stream content instead of fetching it all at once.
-    :type stream: bool
-    :returns: Response object
-    :rtype: :class:`Response`
+    :type allow_redirects: ``Boolean``
+    :returns: :class:`Response` object
 
 
     The ``files`` argument is a dictionary::
@@ -524,11 +469,13 @@ def request(method, url, params=None, data=None, headers=None, cookies=None,
       will be used.
 
     """
+
     # TODO: cookies
+    # TODO: any way to force GET or POST?
     socket.setdefaulttimeout(timeout)
 
     # Default handlers
-    openers = [urllib2.ProxyHandler(urllib2.getproxies())]
+    openers = []
 
     if not allow_redirects:
         openers.append(NoRedirectHandler())
@@ -575,78 +522,44 @@ def request(method, url, params=None, data=None, headers=None, cookies=None,
         url = url.encode('utf-8')
 
     if params:  # GET args (POST args are handled in encode_multipart_formdata)
+        url = url + '?' + urllib.urlencode(str_dict(params))
 
-        scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
-
-        if query:  # Combine query string and `params`
-            url_params = urlparse.parse_qs(query)
-            # `params` take precedence over URL query string
-            url_params.update(params)
-            params = url_params
-
-        query = urllib.urlencode(str_dict(params), doseq=True)
-        url = urlparse.urlunsplit((scheme, netloc, path, query, fragment))
-
-    req = Request(url, data, headers, method=method)
-    return Response(req, stream)
+    req = urllib2.Request(url, data, headers)
+    return Response(req)
 
 
 def get(url, params=None, headers=None, cookies=None, auth=None,
-        timeout=60, allow_redirects=True, stream=False):
+        timeout=60, allow_redirects=True):
     """Initiate a GET request. Arguments as for :func:`request`.
 
     :returns: :class:`Response` instance
 
     """
+
     return request('GET', url, params, headers=headers, cookies=cookies,
-                   auth=auth, timeout=timeout, allow_redirects=allow_redirects,
-                   stream=stream)
-
-
-def delete(url, params=None, data=None, headers=None, cookies=None, auth=None,
-           timeout=60, allow_redirects=True, stream=False):
-    """Initiate a DELETE request. Arguments as for :func:`request`.
-
-    :returns: :class:`Response` instance
-
-    """
-    return request('DELETE', url, params, data, headers=headers,
-                   cookies=cookies, auth=auth, timeout=timeout,
-                   allow_redirects=allow_redirects, stream=stream)
+                   auth=auth, timeout=timeout, allow_redirects=allow_redirects)
 
 
 def post(url, params=None, data=None, headers=None, cookies=None, files=None,
-         auth=None, timeout=60, allow_redirects=False, stream=False):
+         auth=None, timeout=60, allow_redirects=False):
     """Initiate a POST request. Arguments as for :func:`request`.
 
     :returns: :class:`Response` instance
 
     """
     return request('POST', url, params, data, headers, cookies, files, auth,
-                   timeout, allow_redirects, stream)
-
-
-def put(url, params=None, data=None, headers=None, cookies=None, files=None,
-        auth=None, timeout=60, allow_redirects=False, stream=False):
-    """Initiate a PUT request. Arguments as for :func:`request`.
-
-    :returns: :class:`Response` instance
-
-    """
-    return request('PUT', url, params, data, headers, cookies, files, auth,
-                   timeout, allow_redirects, stream)
+                   timeout, allow_redirects)
 
 
 def encode_multipart_formdata(fields, files):
     """Encode form data (``fields``) and ``files`` for POST request.
 
     :param fields: mapping of ``{name : value}`` pairs for normal form fields.
-    :type fields: dict
+    :type fields: :class:`dict`
     :param files: dictionary of fieldnames/files elements for file data.
                   See below for details.
-    :type files: dict of :class:`dict`
-    :returns: ``(headers, body)`` ``headers`` is a
-        :class:`dict` of HTTP headers
+    :type files: :class:`dict` of :class:`dicts`
+    :returns: ``(headers, body)`` ``headers`` is a :class:`dict` of HTTP headers
     :rtype: 2-tuple ``(dict, str)``
 
     The ``files`` argument is a dictionary::
@@ -657,20 +570,20 @@ def encode_multipart_formdata(fields, files):
         }
 
     - ``fieldname`` is the name of the field in the HTML form.
-    - ``mimetype`` is optional. If not provided, :mod:`mimetypes` will
-      be used to guess the mimetype, or ``application/octet-stream``
-      will be used.
+    - ``mimetype`` is optional. If not provided, :mod:`mimetypes` will be used to guess the mimetype, or ``application/octet-stream`` will be used.
 
     """
+
     def get_content_type(filename):
         """Return or guess mimetype of ``filename``.
 
         :param filename: filename of file
-        :type filename: unicode/str
+        :type filename: unicode/string
         :returns: mime-type, e.g. ``text/html``
-        :rtype: str
+        :rtype: :class::class:`str`
 
         """
+
         return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
     boundary = '-----' + ''.join(random.choice(BOUNDARY_CHARS)
