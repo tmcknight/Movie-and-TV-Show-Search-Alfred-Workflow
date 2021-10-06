@@ -96,7 +96,7 @@ def get_tmdb_info(item_type, item_id, api_key):
     elif item_type == 't':
         url += 'tv/' + item_id
     params = dict(
-        api_key=api_key, language='en', append_to_response='videos,external_ids')
+        api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers')
 
     return web.get(url, params).json()
 
@@ -225,6 +225,30 @@ def show_item_info(item, media_type):
                 icon='img/letterboxd.png',
                 valid=True,
                 arg=search_url)
+
+    # JustWatch
+    locale = os.environ['locale']
+    if locale in item['watch/providers']['results'].keys():
+        watchproviders = item['watch/providers']['results'][locale]
+        search_url = watchproviders['link']
+        justwatchstring = ''
+        if 'flatrate' in watchproviders.keys():
+            justwatchstring += 'Stream: ' + \
+                watchproviders['flatrate'][0]['provider_name'] + ' | '
+        if 'buy' in watchproviders.keys():
+            justwatchstring += 'Buy: ' + \
+                watchproviders['buy'][0]['provider_name'] + ' | '
+        if 'rent' in watchproviders.keys():
+            justwatchstring += 'Rent: ' + \
+                watchproviders['rent'][0]['provider_name'] + ' | '
+        justwatchstring = justwatchstring[:-3]  # remove first and last pipe
+
+        all_search_sites.append(search_url)
+        wf.add_item(title='JustWatch',
+                    subtitle=justwatchstring,
+                    icon='img/justwatch.png',
+                    valid=True,
+                    arg=search_url)
 
     if item['videos']['results']:
         trailer = None
