@@ -1,177 +1,181 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.mcknight.movies</string>
+	<key>category</key>
+	<string>Internet</string>
+	<key>connections</key>
 	<dict>
-		<key>bundleid</key>
-		<string>com.mcknight.movies</string>
-		<key>category</key>
-		<string>Internet</string>
-		<key>connections</key>
-		<dict>
-			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
-			<array>
-				<dict>
-					<key>destinationuid</key>
-					<string>7383993A-C301-4ABD-B9A8-1E115F8F4573</string>
-					<key>modifiers</key>
-					<integer>0</integer>
-					<key>modifiersubtext</key>
-					<string></string>
-					<key>vitoclose</key>
-					<false/>
-				</dict>
-			</array>
-			<key>90677662-35FF-41CB-93F4-6758357932B1</key>
-			<array>
-				<dict>
-					<key>destinationuid</key>
-					<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
-					<key>modifiers</key>
-					<integer>0</integer>
-					<key>modifiersubtext</key>
-					<string></string>
-					<key>vitoclose</key>
-					<false/>
-				</dict>
-			</array>
-			<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
-			<array>
-				<dict>
-					<key>destinationuid</key>
-					<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
-					<key>modifiers</key>
-					<integer>0</integer>
-					<key>modifiersubtext</key>
-					<string></string>
-					<key>vitoclose</key>
-					<false/>
-				</dict>
-			</array>
-			<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
-			<array>
-				<dict>
-					<key>destinationuid</key>
-					<string>2F2D9399-94AC-4A44-99BE-993A4A623AC2</string>
-					<key>modifiers</key>
-					<integer>0</integer>
-					<key>modifiersubtext</key>
-					<string></string>
-					<key>vitoclose</key>
-					<false/>
-				</dict>
-			</array>
-		</dict>
-		<key>createdby</key>
-		<string>Tom McKnight</string>
-		<key>description</key>
-		<string>Search and get info on movies or TV shows</string>
-		<key>disabled</key>
-		<false/>
-		<key>name</key>
-		<string>Movie and TV Show Search</string>
-		<key>objects</key>
+		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 		<array>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>concurrently</key>
-					<false/>
-					<key>escaping</key>
-					<integer>0</integer>
-					<key>script</key>
-					<string>import webbrowser
+				<key>destinationuid</key>
+				<string>7383993A-C301-4ABD-B9A8-1E115F8F4573</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2F2D9399-94AC-4A44-99BE-993A4A623AC2</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Tom McKnight</string>
+	<key>description</key>
+	<string>Search and get info on movies or TV shows</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Movie and TV Show Search</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string>import webbrowser
 
 urls = "{query}".split("||")
 for url in  urls:
 	webbrowser.open_new_tab(url)</string>
-					<key>scriptargtype</key>
-					<integer>0</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>type</key>
-					<integer>3</integer>
-				</dict>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>type</key>
-				<string>alfred.workflow.action.script</string>
-				<key>uid</key>
-				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
-				<key>version</key>
-				<integer>2</integer>
+				<integer>3</integer>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>alfredfiltersresults</key>
-					<false/>
-					<key>alfredfiltersresultsmatchmode</key>
-					<integer>0</integer>
-					<key>argumenttrimmode</key>
-					<integer>0</integer>
-					<key>argumenttype</key>
-					<integer>0</integer>
-					<key>escaping</key>
-					<integer>126</integer>
-					<key>keyword</key>
-					<string>movie</string>
-					<key>queuedelaycustom</key>
-					<integer>3</integer>
-					<key>queuedelayimmediatelyinitially</key>
-					<false/>
-					<key>queuedelaymode</key>
-					<integer>1</integer>
-					<key>queuemode</key>
-					<integer>1</integer>
-					<key>runningsubtext</key>
-					<string>Searching for "{query}"...</string>
-					<key>script</key>
-					<string>python media.py "movie" "{query}"</string>
-					<key>scriptargtype</key>
-					<integer>0</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>subtext</key>
-					<string>Search for "{query}"</string>
-					<key>title</key>
-					<string>Search Movies</string>
-					<key>type</key>
-					<integer>0</integer>
-					<key>withspace</key>
-					<true/>
-				</dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>126</integer>
+				<key>keyword</key>
+				<string>movie</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>1</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Searching for "{query}"...</string>
+				<key>script</key>
+				<string>python media.py "movie" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>Search for "{query}"</string>
+				<key>title</key>
+				<string>Search Movies</string>
 				<key>type</key>
-				<string>alfred.workflow.input.scriptfilter</string>
-				<key>uid</key>
-				<string>90677662-35FF-41CB-93F4-6758357932B1</string>
-				<key>version</key>
-				<integer>2</integer>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>90677662-35FF-41CB-93F4-6758357932B1</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>alfredfiltersresults</key>
-					<false/>
-					<key>alfredfiltersresultsmatchmode</key>
-					<integer>0</integer>
-					<key>argumenttrimmode</key>
-					<integer>0</integer>
-					<key>argumenttype</key>
-					<integer>2</integer>
-					<key>escaping</key>
-					<integer>102</integer>
-					<key>keyword</key>
-					<string>movie</string>
-					<key>queuedelaycustom</key>
-					<integer>3</integer>
-					<key>queuedelayimmediatelyinitially</key>
-					<true/>
-					<key>queuedelaymode</key>
-					<integer>0</integer>
-					<key>queuemode</key>
-					<integer>1</integer>
-					<key>runningsubtext</key>
-					<string></string>
-					<key>script</key>
-					<string># THESE VARIABLES MUST BE SET. SEE THE ONEUPDATER README FOR AN EXPLANATION OF EACH.
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>2</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>movie</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string></string>
+				<key>script</key>
+				<string># THESE VARIABLES MUST BE SET. SEE THE ONEUPDATER README FOR AN EXPLANATION OF EACH.
 readonly remote_info_plist='https://raw.githubusercontent.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow/master/info.plist'
 readonly workflow_url='tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow'
 readonly download_type='github_release'
@@ -188,13 +192,13 @@ function url_exists {
 }
 
 function notification {
-  readonly local notificator="$(find . -type d -name 'Notificator.app')"
+  local -r notificator="$(find . -type d -name 'Notificator.app')"
   if [[ -n "${notificator}" ]]; then
     "${notificator}/Contents/Resources/Scripts/notificator" --message "${1}" --title "${alfred_workflow_name}" --subtitle 'A new version is available'
     return
   fi
 
-  readonly local terminal_notifier="$(find . -type f -name 'terminal-notifier')"
+  local -r terminal_notifier="$(find . -type f -name 'terminal-notifier')"
   if [[ -n "${terminal_notifier}" ]]; then
     "${terminal_notifier}" -title "${alfred_workflow_name}" -subtitle 'A new version is available' -message "${1}"
     return
@@ -228,7 +232,9 @@ if [[ $(find "${local_info_plist}" -mtime +"${frequency_check}"d) ]]; then
     notification 'Opening download page…'
     open "${workflow_url}"
     exit 0
-  fi download_url="$([[ "${download_type}" == 'github_release' ]] &amp;&amp; curl --silent "https://api.github.com/repos/${workflow_url}/releases/latest" | grep 'browser_download_url' | head -1 | sed -E 's/.*browser_download_url": "(.*)"/\1/' || echo "${workflow_url}")"
+  fi
+
+  download_url="$([[ "${download_type}" == 'github_release' ]] &amp;&amp; curl --silent "https://api.github.com/repos/${workflow_url}/releases/latest" | grep 'browser_download_url' | head -1 | sed -E 's/.*browser_download_url": "(.*)"/\1/' || echo "${workflow_url}")"
 
   if url_exists "${download_url}"; then
     notification 'Downloading and installing…'
@@ -238,53 +244,55 @@ if [[ $(find "${local_info_plist}" -mtime +"${frequency_check}"d) ]]; then
     abort "'workflow_url' (${download_url}) appears to not be reachable."
   fi
 fi</string>
-					<key>scriptargtype</key>
-					<integer>1</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>subtext</key>
-					<string></string>
-					<key>title</key>
-					<string></string>
-					<key>type</key>
-					<integer>0</integer>
-					<key>withspace</key>
-					<false/>
-				</dict>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string></string>
+				<key>title</key>
+				<string></string>
 				<key>type</key>
-				<string>alfred.workflow.input.scriptfilter</string>
-				<key>uid</key>
-				<string>6962A89C-AE02-4EED-9E16-D2E74C1CD9C5</string>
-				<key>version</key>
-				<integer>2</integer>
+				<integer>0</integer>
+				<key>withspace</key>
+				<false/>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>6962A89C-AE02-4EED-9E16-D2E74C1CD9C5</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>alfredfiltersresults</key>
-					<false/>
-					<key>alfredfiltersresultsmatchmode</key>
-					<integer>0</integer>
-					<key>argumenttrimmode</key>
-					<integer>0</integer>
-					<key>argumenttype</key>
-					<integer>2</integer>
-					<key>escaping</key>
-					<integer>102</integer>
-					<key>keyword</key>
-					<string>tv</string>
-					<key>queuedelaycustom</key>
-					<integer>3</integer>
-					<key>queuedelayimmediatelyinitially</key>
-					<true/>
-					<key>queuedelaymode</key>
-					<integer>0</integer>
-					<key>queuemode</key>
-					<integer>1</integer>
-					<key>runningsubtext</key>
-					<string></string>
-					<key>script</key>
-					<string># THESE VARIABLES MUST BE SET. SEE THE ONEUPDATER README FOR AN EXPLANATION OF EACH.
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>2</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>tv</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string></string>
+				<key>script</key>
+				<string># THESE VARIABLES MUST BE SET. SEE THE ONEUPDATER README FOR AN EXPLANATION OF EACH.
 readonly remote_info_plist='https://raw.githubusercontent.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow/master/info.plist'
 readonly workflow_url='tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow'
 readonly download_type='github_release'
@@ -301,13 +309,13 @@ function url_exists {
 }
 
 function notification {
-  readonly local notificator="$(find . -type d -name 'Notificator.app')"
+  local -r notificator="$(find . -type d -name 'Notificator.app')"
   if [[ -n "${notificator}" ]]; then
     "${notificator}/Contents/Resources/Scripts/notificator" --message "${1}" --title "${alfred_workflow_name}" --subtitle 'A new version is available'
     return
   fi
 
-  readonly local terminal_notifier="$(find . -type f -name 'terminal-notifier')"
+  local -r terminal_notifier="$(find . -type f -name 'terminal-notifier')"
   if [[ -n "${terminal_notifier}" ]]; then
     "${terminal_notifier}" -title "${alfred_workflow_name}" -subtitle 'A new version is available' -message "${1}"
     return
@@ -341,7 +349,9 @@ if [[ $(find "${local_info_plist}" -mtime +"${frequency_check}"d) ]]; then
     notification 'Opening download page…'
     open "${workflow_url}"
     exit 0
-  fi download_url="$([[ "${download_type}" == 'github_release' ]] &amp;&amp; curl --silent "https://api.github.com/repos/${workflow_url}/releases/latest" | grep 'browser_download_url' | head -1 | sed -E 's/.*browser_download_url": "(.*)"/\1/' || echo "${workflow_url}")"
+  fi
+
+  download_url="$([[ "${download_type}" == 'github_release' ]] &amp;&amp; curl --silent "https://api.github.com/repos/${workflow_url}/releases/latest" | grep 'browser_download_url' | head -1 | sed -E 's/.*browser_download_url": "(.*)"/\1/' || echo "${workflow_url}")"
 
   if url_exists "${download_url}"; then
     notification 'Downloading and installing…'
@@ -351,229 +361,233 @@ if [[ $(find "${local_info_plist}" -mtime +"${frequency_check}"d) ]]; then
     abort "'workflow_url' (${download_url}) appears to not be reachable."
   fi
 fi</string>
-					<key>scriptargtype</key>
-					<integer>1</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>subtext</key>
-					<string></string>
-					<key>title</key>
-					<string></string>
-					<key>type</key>
-					<integer>0</integer>
-					<key>withspace</key>
-					<false/>
-				</dict>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string></string>
+				<key>title</key>
+				<string></string>
 				<key>type</key>
-				<string>alfred.workflow.input.scriptfilter</string>
-				<key>uid</key>
-				<string>7552CA74-5099-42FE-BAB4-EEDA799BC23E</string>
-				<key>version</key>
-				<integer>2</integer>
+				<integer>0</integer>
+				<key>withspace</key>
+				<false/>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>7552CA74-5099-42FE-BAB4-EEDA799BC23E</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>alfredfiltersresults</key>
-					<false/>
-					<key>alfredfiltersresultsmatchmode</key>
-					<integer>0</integer>
-					<key>argumenttrimmode</key>
-					<integer>0</integer>
-					<key>argumenttype</key>
-					<integer>0</integer>
-					<key>escaping</key>
-					<integer>126</integer>
-					<key>keyword</key>
-					<string>tv</string>
-					<key>queuedelaycustom</key>
-					<integer>3</integer>
-					<key>queuedelayimmediatelyinitially</key>
-					<false/>
-					<key>queuedelaymode</key>
-					<integer>1</integer>
-					<key>queuemode</key>
-					<integer>1</integer>
-					<key>runningsubtext</key>
-					<string>Searching for "{query}"...</string>
-					<key>script</key>
-					<string>python media.py "tv" "{query}"</string>
-					<key>scriptargtype</key>
-					<integer>0</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>subtext</key>
-					<string>Search for "{query}"</string>
-					<key>title</key>
-					<string>Search TV Shows</string>
-					<key>type</key>
-					<integer>0</integer>
-					<key>withspace</key>
-					<true/>
-				</dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>126</integer>
+				<key>keyword</key>
+				<string>tv</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>1</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Searching for "{query}"...</string>
+				<key>script</key>
+				<string>python media.py "tv" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>Search for "{query}"</string>
+				<key>title</key>
+				<string>Search TV Shows</string>
 				<key>type</key>
-				<string>alfred.workflow.input.scriptfilter</string>
-				<key>uid</key>
-				<string>B8455555-F05D-4969-83C9-5DE09914B79D</string>
-				<key>version</key>
-				<integer>2</integer>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>B8455555-F05D-4969-83C9-5DE09914B79D</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>applescript</key>
-					<string>on alfred_script(q)
+				<key>applescript</key>
+				<string>on alfred_script(q)
 	tell application "Alfred 2"
 		search "movie " &amp; q
 	end tell
 end alfred_script</string>
-					<key>cachescript</key>
-					<false/>
-				</dict>
-				<key>type</key>
-				<string>alfred.workflow.action.applescript</string>
-				<key>uid</key>
-				<string>7383993A-C301-4ABD-B9A8-1E115F8F4573</string>
-				<key>version</key>
-				<integer>1</integer>
+				<key>cachescript</key>
+				<false/>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.applescript</string>
+			<key>uid</key>
+			<string>7383993A-C301-4ABD-B9A8-1E115F8F4573</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>text</key>
-					<string>Search movies for '{query}'</string>
-				</dict>
-				<key>type</key>
-				<string>alfred.workflow.trigger.fallback</string>
-				<key>uid</key>
-				<string>6079855E-22E9-4B4C-8DD5-919CB258064A</string>
-				<key>version</key>
-				<integer>1</integer>
+				<key>text</key>
+				<string>Search movies for '{query}'</string>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>6079855E-22E9-4B4C-8DD5-919CB258064A</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>applescript</key>
-					<string>on alfred_script(q)
+				<key>applescript</key>
+				<string>on alfred_script(q)
 	tell application "Alfred 2"
 		search "tv " &amp; q
 	end tell
 end alfred_script</string>
-					<key>cachescript</key>
-					<false/>
-				</dict>
-				<key>type</key>
-				<string>alfred.workflow.action.applescript</string>
-				<key>uid</key>
-				<string>2F2D9399-94AC-4A44-99BE-993A4A623AC2</string>
-				<key>version</key>
-				<integer>1</integer>
+				<key>cachescript</key>
+				<false/>
 			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.applescript</string>
+			<key>uid</key>
+			<string>2F2D9399-94AC-4A44-99BE-993A4A623AC2</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
 			<dict>
-				<key>config</key>
-				<dict>
-					<key>text</key>
-					<string>Search tv shows for '{query}'</string>
-				</dict>
-				<key>type</key>
-				<string>alfred.workflow.trigger.fallback</string>
-				<key>uid</key>
-				<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
-				<key>version</key>
-				<integer>1</integer>
+				<key>text</key>
+				<string>Search tv shows for '{query}'</string>
 			</dict>
-		</array>
-		<key>readme</key>
-		<string>An Alfred workflow to search for a movie or tv show and get a few ratings.
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>An Alfred workflow to search for a movie or tv show and get a few ratings.
 
 Type 'movie', then a movie title. Hit ENTER on an item to get info.
 Type 'tv', then a tv show title. Hit ENTER on an item to get info.
 
 A free API key for OMDb is provided, but you may set your own in the Workflow Environment Variables.</string>
-		<key>uidata</key>
+	<key>uidata</key>
+	<dict>
+		<key>2F2D9399-94AC-4A44-99BE-993A4A623AC2</key>
 		<dict>
-			<key>2F2D9399-94AC-4A44-99BE-993A4A623AC2</key>
-			<dict>
-				<key>xpos</key>
-				<integer>500</integer>
-				<key>ypos</key>
-				<integer>430</integer>
-			</dict>
-			<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
-			<dict>
-				<key>xpos</key>
-				<integer>500</integer>
-				<key>ypos</key>
-				<real>10</real>
-			</dict>
-			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
-			<dict>
-				<key>xpos</key>
-				<integer>100</integer>
-				<key>ypos</key>
-				<integer>310</integer>
-			</dict>
-			<key>6962A89C-AE02-4EED-9E16-D2E74C1CD9C5</key>
-			<dict>
-				<key>colorindex</key>
-				<integer>12</integer>
-				<key>note</key>
-				<string>OneUpdater</string>
-				<key>xpos</key>
-				<integer>670</integer>
-				<key>ypos</key>
-				<integer>10</integer>
-			</dict>
-			<key>7383993A-C301-4ABD-B9A8-1E115F8F4573</key>
-			<dict>
-				<key>xpos</key>
-				<integer>500</integer>
-				<key>ypos</key>
-				<integer>310</integer>
-			</dict>
-			<key>7552CA74-5099-42FE-BAB4-EEDA799BC23E</key>
-			<dict>
-				<key>colorindex</key>
-				<integer>12</integer>
-				<key>note</key>
-				<string>OneUpdater</string>
-				<key>xpos</key>
-				<integer>670</integer>
-				<key>ypos</key>
-				<integer>150</integer>
-			</dict>
-			<key>90677662-35FF-41CB-93F4-6758357932B1</key>
-			<dict>
-				<key>xpos</key>
-				<integer>300</integer>
-				<key>ypos</key>
-				<real>10</real>
-			</dict>
-			<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
-			<dict>
-				<key>xpos</key>
-				<integer>300</integer>
-				<key>ypos</key>
-				<integer>150</integer>
-			</dict>
-			<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
-			<dict>
-				<key>xpos</key>
-				<integer>100</integer>
-				<key>ypos</key>
-				<integer>430</integer>
-			</dict>
+			<key>xpos</key>
+			<integer>500</integer>
+			<key>ypos</key>
+			<integer>430</integer>
 		</dict>
-		<key>variables</key>
+		<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
 		<dict>
-			<key>locale</key>
-			<string>US</string>
-			<key>omdb_api_key</key>
-			<string>1bf8d40a</string>
+			<key>xpos</key>
+			<integer>500</integer>
+			<key>ypos</key>
+			<real>10</real>
 		</dict>
-		<key>version</key>
-		<string>2.10</string>
-		<key>webaddress</key>
-		<string>https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow</string>
+		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>100</integer>
+			<key>ypos</key>
+			<integer>310</integer>
+		</dict>
+		<key>6962A89C-AE02-4EED-9E16-D2E74C1CD9C5</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>12</integer>
+			<key>note</key>
+			<string>OneUpdater</string>
+			<key>xpos</key>
+			<integer>670</integer>
+			<key>ypos</key>
+			<integer>10</integer>
+		</dict>
+		<key>7383993A-C301-4ABD-B9A8-1E115F8F4573</key>
+		<dict>
+			<key>xpos</key>
+			<integer>500</integer>
+			<key>ypos</key>
+			<integer>310</integer>
+		</dict>
+		<key>7552CA74-5099-42FE-BAB4-EEDA799BC23E</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>12</integer>
+			<key>note</key>
+			<string>OneUpdater</string>
+			<key>xpos</key>
+			<integer>670</integer>
+			<key>ypos</key>
+			<integer>150</integer>
+		</dict>
+		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
+		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
+		<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
+		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
+			<key>ypos</key>
+			<integer>150</integer>
+		</dict>
+		<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
+		<dict>
+			<key>xpos</key>
+			<integer>100</integer>
+			<key>ypos</key>
+			<integer>430</integer>
+		</dict>
 	</dict>
+	<key>variables</key>
+	<dict>
+		<key>locale</key>
+		<string>US</string>
+		<key>omdb_api_key</key>
+		<string>1bf8d40a</string>
+	</dict>
+	<key>variablesdontexport</key>
+	<array/>
+	<key>version</key>
+	<string>2.10.1</string>
+	<key>webaddress</key>
+	<string>https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow</string>
+</dict>
 </plist>
