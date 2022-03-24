@@ -41,7 +41,7 @@ def main(wf):
             log.debug('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
-        except AttributeError, e:
+        except AttributeError as e:
             wf.add_item('The item was not found.')
     else:
         def wrapper():
@@ -53,7 +53,7 @@ def main(wf):
             url = TMDB_API_URL + 'search/' + media_type
             params = dict(api_key=api_key, query=query, search_type='ngram')
             results = web.get(url, params).json()
-        except Exception, e:
+        except Exception as e:
             wf.add_item('Uh oh... something went wrong',
                         subtitle='Please check your internet connection.')
             wf.send_feedback()
