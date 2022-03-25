@@ -146,7 +146,7 @@ def show_item_info(item, media_type):
                   "subtitle": get_subtitle(omdb_info),
                   "valid": True,
                   # icon : "poster.jpg",
-                  "arg": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE)})
+                  "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE)})
 
     search = urllib.parse.quote(item[title_key].encode(
         'utf-8'), safe=':'.encode('utf-8'))
@@ -162,7 +162,9 @@ def show_item_info(item, media_type):
                       "icon": {"path": 'img/imdb.png'},
                       "valid": True,
                       "arg": search_url,
-                      "copytext": omdb_info['imdbID']})
+                      "text": {
+                          "copy": omdb_info['imdbID']}
+                      })
     else:
         items.append({"title": 'IMDb',
                       "subtitle": f"Search IMDb for '{item[title_key]}'",
