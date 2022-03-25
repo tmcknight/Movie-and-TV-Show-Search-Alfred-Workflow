@@ -6,9 +6,9 @@ import sys
 import argparse
 import urllib
 import urllib.parse
+import urllib.request
 import re
 import json
-import requests
 from mako.template import Template
 
 ICON_ROOT = '/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources'
@@ -60,7 +60,7 @@ def main(media_type, query):
             url = f'{TMDB_API_URL}search/{media_type}'
             params = {"api_key": api_key,
                       "query": query, "search_type": 'ngram'}
-            results = requests.get(url, params=params).json()
+            results = get_json(url, params)
         except Exception as e:
             log(e)
             items.append({
@@ -97,7 +97,7 @@ def main(media_type, query):
 def get_tmdb_configuration(api_key):
     url = TMDB_API_URL + 'configuration'
     params = dict(api_key=api_key)
-    return requests.get(url, params).json()
+    return get_json(url, params)
 
 
 def get_tmdb_info(item_type, item_id, api_key):
@@ -109,13 +109,13 @@ def get_tmdb_info(item_type, item_id, api_key):
     params = dict(
         api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers')
 
-    return requests.get(url, params).json()
+    return get_json(url, params)
 
 
 def get_omdb_info(imdb_id):
     url = OMDB_API_URL
     params = dict(i=imdb_id, tomatoes=True, apikey=os.environ['omdb_api_key'])
-    return requests.get(url, params).json()
+    return get_json(url, params)
 
 
 def show_item_info(item, media_type):
@@ -133,10 +133,6 @@ def show_item_info(item, media_type):
     if omdb_info['Response'] == 'False':
         items.append({"title": "Details not found."})
         return
-
-    # get poster
-    # urllib.urlretrieve("https://image.tmdb.org/t/p/w92" +
-    # movie['poster_path'], "poster.jpg")
 
     title = item[title_key]
     if item[release_date_key]:
@@ -356,6 +352,15 @@ def log(s, *args):
     if args:
         s = s % args
     print(s, file=sys.stderr)
+
+
+def get_json(url, params):
+    qstr = urllib.parse.urlencode(params)
+    url = f"{url}?{qstr}"
+    log(url)
+    with urllib.request.urlopen(url) as url_return:
+        data = json.load(url_return)
+        return data
 
 
 if __name__ == "__main__":
