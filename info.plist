@@ -79,17 +79,13 @@
 				<key>escaping</key>
 				<integer>0</integer>
 				<key>script</key>
-				<string>import webbrowser
-
-urls = "{query}".split("||")
-for url in  urls:
-	webbrowser.open_new_tab(url)</string>
+				<string>python3 openurls.py -u="{query}"</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>type</key>
-				<integer>3</integer>
+				<integer>0</integer>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.action.script</string>
@@ -126,7 +122,7 @@ for url in  urls:
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
-				<string>python media.py "movie" "{query}"</string>
+				<string>python3 media.py -t="movie" -q="{query}"</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -409,7 +405,7 @@ fi</string>
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
-				<string>python media.py "tv" "{query}"</string>
+				<string>python3 media.py -t="tv" -q="{query}"</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -586,7 +582,7 @@ A free API key for OMDb is provided, but you may set your own in the Workflow En
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>2.10.1</string>
+	<string>2.11</string>
 	<key>webaddress</key>
 	<string>https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow</string>
 </dict>
