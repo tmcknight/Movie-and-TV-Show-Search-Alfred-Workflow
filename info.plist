@@ -335,13 +335,22 @@ fi</string>
 Type 'movie', then a movie title. Hit ENTER on an item to get info.
 Type 'tv', then a tv show title. Hit ENTER on an item to get info.
 
-A free API key for OMDb is provided, but you may set your own in the Workflow Environment Variables.
 
-Other workflow environment variables include:
-locale - This controls the movie/tv show certification shown (e.g. - PG-13). This also adjusts the results shown for JustWatch. Default: US
-include_letterboxd - Include the Letterboxd item. Default: true.
-include_moviechat - Include the MovieChat item. Default: true.
-include_justwatch - Include the JustWatch item. Default: true.</string>
+Workflow Environment Variables:
+- omdb_api_key (default: 1bf8d40a)
+This API key is included for communicating with the OMDb API. You can change it to your own if you'd like.
+
+- locale (default: US)
+This controls the movie/tv show certification shown (e.g. - PG-13). This also adjusts the results shown for JustWatch.
+
+- include_letterboxd (default: true)
+Include the Letterboxd item.
+
+- include_moviechat (default: true)
+Include the MovieChat item.
+
+- include_justwatch (default: true)
+Include the JustWatch item.</string>
 	<key>uidata</key>
 	<dict>
 		<key>353BEDC8-43A6-4E94-BF56-DC1D770A19E2</key>
