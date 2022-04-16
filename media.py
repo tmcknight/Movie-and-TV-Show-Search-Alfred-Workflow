@@ -23,6 +23,7 @@ YOUTUBE_WATCH_URL = 'https://youtube.com/watch?v='
 METACRITIC_SEARCH_URL = 'https://metacritic.com/search/'
 ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
 LETTERBOXD_URL = 'https://letterboxd.com/imdb/'
+MOVIECHAT_URL = 'https://moviechat.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
@@ -231,6 +232,15 @@ def show_item_info(item, media_type):
     items.append({"title": 'Letterboxd',
                   "subtitle": f"View '{item[title_key]}' on Letterboxd",
                   "icon": {"path": 'img/letterboxd.png'},
+                  "valid": True,
+                  "arg": search_url})
+
+    # MovieChat
+    search_url = MOVIECHAT_URL + omdb_info['imdbID']
+    all_search_sites.append(search_url)
+    items.append({"title": 'MovieChat',
+                  "subtitle": f"View '{item[title_key]}' on MovieChat",
+                  "icon": {"path": 'img/moviechat.png'},
                   "valid": True,
                   "arg": search_url})
 
