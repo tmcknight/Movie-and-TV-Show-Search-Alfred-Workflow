@@ -87,42 +87,6 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>text</key>
-				<string>Search movies for '{query}'</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.trigger.fallback</string>
-			<key>uid</key>
-			<string>6079855E-22E9-4B4C-8DD5-919CB258064A</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>0</integer>
-				<key>script</key>
-				<string>python3 openurls.py -u="{query}"</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
-			<key>version</key>
-			<integer>2</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>concurrently</key>
 				<false/>
 				<key>escaping</key>
@@ -214,6 +178,42 @@ fi</string>
 			<string>alfred.workflow.action.script</string>
 			<key>uid</key>
 			<string>353BEDC8-43A6-4E94-BF56-DC1D770A19E2</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>text</key>
+				<string>Search movies for '{query}'</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>6079855E-22E9-4B4C-8DD5-919CB258064A</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string>python3 openurls.py -u="{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
 			<key>version</key>
 			<integer>2</integer>
 		</dict>
@@ -335,7 +335,13 @@ fi</string>
 Type 'movie', then a movie title. Hit ENTER on an item to get info.
 Type 'tv', then a tv show title. Hit ENTER on an item to get info.
 
-A free API key for OMDb is provided, but you may set your own in the Workflow Environment Variables.</string>
+A free API key for OMDb is provided, but you may set your own in the Workflow Environment Variables.
+
+Other workflow environment variables include:
+locale - This controls the movie/tv show certification shown (e.g. - PG-13). This also adjusts the results shown for JustWatch. Default: US
+include_letterboxd - Include the Letterboxd item. Default: true.
+include_moviechat - Include the MovieChat item. Default: true.
+include_justwatch - Include the JustWatch item. Default: true.</string>
 	<key>uidata</key>
 	<dict>
 		<key>353BEDC8-43A6-4E94-BF56-DC1D770A19E2</key>
@@ -387,13 +393,17 @@ A free API key for OMDb is provided, but you may set your own in the Workflow En
 	</dict>
 	<key>variables</key>
 	<dict>
+		<key>include_justwatch</key>
+		<string>true</string>
+		<key>include_letterboxd</key>
+		<string>true</string>
+		<key>include_moviechat</key>
+		<string>true</string>
 		<key>locale</key>
 		<string>US</string>
 		<key>omdb_api_key</key>
 		<string>1bf8d40a</string>
 	</dict>
-	<key>variablesdontexport</key>
-	<array/>
 	<key>version</key>
 	<string>2.12.0</string>
 	<key>webaddress</key>

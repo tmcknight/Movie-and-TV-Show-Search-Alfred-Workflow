@@ -1,5 +1,6 @@
 # encoding: utf-8
 from __future__ import unicode_literals, print_function
+from distutils.util import strtobool
 
 import os
 import sys
@@ -27,6 +28,10 @@ MOVIECHAT_URL = 'https://moviechat.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
+
+INCLUDE_LETTERBOXD = bool(strtobool(os.environ['include_letterboxd']))
+INCLUDE_JUSTWATCH = bool(strtobool(os.environ['include_justwatch']))
+INCLUDE_MOVIECHAT = bool(strtobool(os.environ['include_moviechat']))
 
 if not os.path.exists(CACHEDIR):
     os.makedirs(CACHEDIR)
@@ -227,46 +232,50 @@ def show_item_info(item, media_type):
                       "arg": search_url})
 
     # Letterboxd
-    search_url = LETTERBOXD_URL + omdb_info['imdbID']
-    all_search_sites.append(search_url)
-    items.append({"title": 'Letterboxd',
-                  "subtitle": f"View '{item[title_key]}' on Letterboxd",
-                  "icon": {"path": 'img/letterboxd.png'},
-                  "valid": True,
-                  "arg": search_url})
-
-    # MovieChat
-    search_url = MOVIECHAT_URL + omdb_info['imdbID']
-    all_search_sites.append(search_url)
-    items.append({"title": 'MovieChat',
-                  "subtitle": f"View '{item[title_key]}' on MovieChat",
-                  "icon": {"path": 'img/moviechat.png'},
-                  "valid": True,
-                  "arg": search_url})
-
-    # JustWatch
-    locale = os.environ['locale']
-    if locale in item['watch/providers']['results'].keys():
-        watchproviders = item['watch/providers']['results'][locale]
-        search_url = watchproviders['link']
-        justwatchstring = ''
-        if 'flatrate' in watchproviders.keys():
-            justwatchstring += 'Stream: ' + \
-                watchproviders['flatrate'][0]['provider_name'] + ' | '
-        if 'buy' in watchproviders.keys():
-            justwatchstring += 'Buy: ' + \
-                watchproviders['buy'][0]['provider_name'] + ' | '
-        if 'rent' in watchproviders.keys():
-            justwatchstring += 'Rent: ' + \
-                watchproviders['rent'][0]['provider_name'] + ' | '
-        justwatchstring = justwatchstring[:-3]  # remove first and last pipe
-
+    if INCLUDE_LETTERBOXD:
+        search_url = LETTERBOXD_URL + omdb_info['imdbID']
         all_search_sites.append(search_url)
-        items.append({"title": 'JustWatch',
-                      "subtitle": justwatchstring,
-                      "icon": {"path": 'img/justwatch.png'},
+        items.append({"title": 'Letterboxd',
+                      "subtitle": f"View '{item[title_key]}' on Letterboxd",
+                      "icon": {"path": 'img/letterboxd.png'},
                       "valid": True,
                       "arg": search_url})
+
+    # MovieChat
+    if INCLUDE_MOVIECHAT:
+        search_url = MOVIECHAT_URL + omdb_info['imdbID']
+        all_search_sites.append(search_url)
+        items.append({"title": 'MovieChat',
+                      "subtitle": f"View '{item[title_key]}' on MovieChat",
+                      "icon": {"path": 'img/moviechat.png'},
+                      "valid": True,
+                      "arg": search_url})
+
+    # JustWatch
+    if INCLUDE_JUSTWATCH:
+        locale = os.environ['locale']
+        if locale in item['watch/providers']['results'].keys():
+            watchproviders = item['watch/providers']['results'][locale]
+            search_url = watchproviders['link']
+            justwatchstring = ''
+            if 'flatrate' in watchproviders.keys():
+                justwatchstring += 'Stream: ' + \
+                    watchproviders['flatrate'][0]['provider_name'] + ' | '
+            if 'buy' in watchproviders.keys():
+                justwatchstring += 'Buy: ' + \
+                    watchproviders['buy'][0]['provider_name'] + ' | '
+            if 'rent' in watchproviders.keys():
+                justwatchstring += 'Rent: ' + \
+                    watchproviders['rent'][0]['provider_name'] + ' | '
+            # remove first and last pipe
+            justwatchstring = justwatchstring[:-3]
+
+            all_search_sites.append(search_url)
+            items.append({"title": 'JustWatch',
+                          "subtitle": justwatchstring,
+                          "icon": {"path": 'img/justwatch.png'},
+                          "valid": True,
+                          "arg": search_url})
 
     if item['videos']['results']:
         trailer = None
