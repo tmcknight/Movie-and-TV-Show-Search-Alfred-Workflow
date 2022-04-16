@@ -107,7 +107,7 @@ def get_tmdb_info(item_type, item_id, api_key):
     elif item_type == 't':
         url += 'tv/' + item_id
     params = dict(
-        api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers')
+        api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers,releases')
 
     return get_json(url, params)
 
@@ -139,7 +139,7 @@ def show_item_info(item, media_type):
         title += ' (' + item[release_date_key][:4] + ')'
 
     items.append({"title": title,
-                  "subtitle": get_subtitle(omdb_info),
+                  "subtitle": get_subtitle(item, omdb_info),
                   "valid": True,
                   # icon : "poster.jpg",
                   "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE)})
@@ -313,7 +313,7 @@ def generate_item_html(omdb_info, tmdb_info):
         release_date=omdb_info['Released'],
         director=omdb_info['Director'],
         actors=omdb_info['Actors'],
-        genre=get_subtitle(omdb_info)
+        genre=get_subtitle(tmdb_info, omdb_info)
     )
     with open(HTML_SUMMARY_FILE, "wb") as text_file:
         text_file.write(html)
@@ -321,17 +321,24 @@ def generate_item_html(omdb_info, tmdb_info):
     return
 
 
-def get_subtitle(omdb_info):
+def get_subtitle(tmdb_info, omdb_info):
+    locale = os.environ['locale']
+    certification = 'N/A'
+    for release in tmdb_info['releases']['countries']:
+        if release['iso_3166_1'] == locale:
+            certification = release['certification']
+            break
+    else:
+        certification = omdb_info['Rated']
     subtitleItems = []
     if omdb_info['Runtime'] != 'N/A':
         subtitleItems.append(omdb_info['Runtime'])
     if omdb_info['Genre'] != 'N/A':
         subtitleItems.append(omdb_info['Genre'])
-    if omdb_info['Rated'] != 'N/A':
-        rating_string = omdb_info['Rated']
-        if "rated" not in rating_string.lower():
-            rating_string = 'Rated ' + rating_string
-        subtitleItems.append(rating_string)
+    if certification != 'N/A':
+        if "rated" not in certification.lower():
+            certification = 'Rated ' + certification
+        subtitleItems.append(certification)
     return ' \u2022 '.join(subtitleItems)
 
 
