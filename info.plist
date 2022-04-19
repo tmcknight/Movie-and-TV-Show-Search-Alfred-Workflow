@@ -269,6 +269,19 @@ fi</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>text</key>
+				<string>Search tv shows for '{query}'</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
 				<key>alfredfiltersresults</key>
 				<false/>
 				<key>alfredfiltersresultsmatchmode</key>
@@ -314,19 +327,6 @@ fi</string>
 			<string>B8455555-F05D-4969-83C9-5DE09914B79D</string>
 			<key>version</key>
 			<integer>3</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>text</key>
-				<string>Search tv shows for '{query}'</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.trigger.fallback</string>
-			<key>uid</key>
-			<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
-			<key>version</key>
-			<integer>1</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -413,8 +413,10 @@ Include the JustWatch item.</string>
 		<key>omdb_api_key</key>
 		<string>1bf8d40a</string>
 	</dict>
+	<key>variablesdontexport</key>
+	<array/>
 	<key>version</key>
-	<string>2.12.0</string>
+	<string>2.12.1</string>
 	<key>webaddress</key>
 	<string>https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow</string>
 </dict>

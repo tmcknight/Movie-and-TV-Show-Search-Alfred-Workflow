@@ -113,7 +113,7 @@ def get_tmdb_info(item_type, item_id, api_key):
     elif item_type == 't':
         url += 'tv/' + item_id
     params = dict(
-        api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers,releases')
+        api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers,releases,content_ratings')
 
     return get_json(url, params)
 
@@ -145,7 +145,7 @@ def show_item_info(item, media_type):
         title += ' (' + item[release_date_key][:4] + ')'
 
     items.append({"title": title,
-                  "subtitle": get_subtitle(item, omdb_info),
+                  "subtitle": get_subtitle(item, omdb_info, media_type),
                   "valid": True,
                   # icon : "poster.jpg",
                   "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE)})
@@ -310,12 +310,12 @@ def show_item_info(item, media_type):
                   "subtitle": 'Actors',
                   "icon": {"path": ICON_GROUP}})
 
-    generate_item_html(omdb_info, item)
+    generate_item_html(omdb_info, item, media_type)
 
     return
 
 
-def generate_item_html(omdb_info, tmdb_info):
+def generate_item_html(omdb_info, tmdb_info, media_type):
     item_template = Template(
         filename='templates/media.html', output_encoding='utf-8')
 
@@ -332,7 +332,7 @@ def generate_item_html(omdb_info, tmdb_info):
         release_date=omdb_info['Released'],
         director=omdb_info['Director'],
         actors=omdb_info['Actors'],
-        genre=get_subtitle(tmdb_info, omdb_info)
+        genre=get_subtitle(tmdb_info, omdb_info, media_type)
     )
     with open(HTML_SUMMARY_FILE, "wb") as text_file:
         text_file.write(html)
@@ -340,15 +340,19 @@ def generate_item_html(omdb_info, tmdb_info):
     return
 
 
-def get_subtitle(tmdb_info, omdb_info):
+def get_subtitle(tmdb_info, omdb_info, media_type):
     locale = os.environ['locale']
-    certification = 'N/A'
-    for release in tmdb_info['releases']['countries']:
-        if release['iso_3166_1'] == locale:
-            certification = release['certification']
-            break
-    else:
-        certification = omdb_info['Rated']
+    certification = omdb_info['Rated']
+    if media_type == 'movie' and 'releases' in tmdb_info.keys():
+        for release in tmdb_info['releases']['countries']:
+            if release['iso_3166_1'] == locale:
+                certification = release['certification']
+                break
+    elif media_type == 'tv' and 'content_ratings' in tmdb_info.keys():
+        for release in tmdb_info['content_ratings']['results']:
+            if release['iso_3166_1'] == locale:
+                certification = release['rating']
+                break
     subtitleItems = []
     if omdb_info['Runtime'] != 'N/A':
         subtitleItems.append(omdb_info['Runtime'])
