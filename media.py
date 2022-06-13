@@ -23,7 +23,7 @@ IMDB_URL = 'https://imdb.com/'
 YOUTUBE_WATCH_URL = 'https://youtube.com/watch?v='
 METACRITIC_SEARCH_URL = 'https://metacritic.com/search/'
 ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
-LETTERBOXD_URL = 'https://letterboxd.com/imdb/'
+LETTERBOXD_URL = 'https://letterboxd.com/tmdb/'
 MOVIECHAT_URL = 'https://moviechat.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
@@ -43,13 +43,13 @@ def main(media_type, query):
 
     global METACRITIC_SEARCH_URL
     METACRITIC_SEARCH_URL += media_type + '/'
-
     api_key = DEFAULT_TMDB_API_KEY
-
+    global q
     m = re.match('([m|t])\:([0-9]*)', query)
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
             item = get_tmdb_info(m.group(1), m.group(2), api_key)
+            q = m.group(2)
             log('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
@@ -233,7 +233,7 @@ def show_item_info(item, media_type):
 
     # Letterboxd
     if INCLUDE_LETTERBOXD:
-        search_url = LETTERBOXD_URL + omdb_info['imdbID']
+        search_url = LETTERBOXD_URL + q
         all_search_sites.append(search_url)
         items.append({"title": 'Letterboxd',
                       "subtitle": f"View '{item[title_key]}' on Letterboxd",
