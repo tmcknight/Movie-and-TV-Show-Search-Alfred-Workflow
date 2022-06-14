@@ -231,7 +231,7 @@ def show_item_info(item, media_type):
 
     # Letterboxd
     if INCLUDE_LETTERBOXD:
-        search_url = LETTERBOXD_URL + item['id']
+        search_url = LETTERBOXD_URL + str(item['id'])
         all_search_sites.append(search_url)
         items.append({"title": 'Letterboxd',
                       "subtitle": f"View '{item[title_key]}' on Letterboxd",
