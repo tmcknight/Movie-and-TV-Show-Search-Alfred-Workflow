@@ -48,7 +48,6 @@ def main(media_type, query):
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
             item = get_tmdb_info(m.group(1), m.group(2), api_key)
-            q = m.group(2)
             log('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
