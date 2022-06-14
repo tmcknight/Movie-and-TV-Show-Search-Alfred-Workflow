@@ -44,7 +44,6 @@ def main(media_type, query):
     global METACRITIC_SEARCH_URL
     METACRITIC_SEARCH_URL += media_type + '/'
     api_key = DEFAULT_TMDB_API_KEY
-    global q
     m = re.match('([m|t])\:([0-9]*)', query)
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
@@ -233,7 +232,7 @@ def show_item_info(item, media_type):
 
     # Letterboxd
     if INCLUDE_LETTERBOXD:
-        search_url = LETTERBOXD_URL + q
+        search_url = LETTERBOXD_URL + item['id']
         all_search_sites.append(search_url)
         items.append({"title": 'Letterboxd',
                       "subtitle": f"View '{item[title_key]}' on Letterboxd",
