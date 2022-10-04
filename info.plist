@@ -202,9 +202,9 @@ fi</string>
 				<key>escaping</key>
 				<integer>0</integer>
 				<key>script</key>
-				<string>python3 openurls.py -u="{query}"</string>
+				<string>python3 openurls.py -u="${1}"</string>
 				<key>scriptargtype</key>
-				<integer>0</integer>
+				<integer>1</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>type</key>
@@ -233,7 +233,7 @@ fi</string>
 				<key>escaping</key>
 				<integer>126</integer>
 				<key>keyword</key>
-				<string>movie</string>
+				<string>{var:movie_keyword}</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -245,9 +245,9 @@ fi</string>
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
-				<string>python3 media.py -t="movie" -q="{query}"</string>
+				<string>python3 media.py -t="movie" -q="${1}"</string>
 				<key>scriptargtype</key>
-				<integer>0</integer>
+				<integer>1</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
@@ -269,19 +269,6 @@ fi</string>
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>text</key>
-				<string>Search tv shows for '{query}'</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.trigger.fallback</string>
-			<key>uid</key>
-			<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>alfredfiltersresults</key>
 				<false/>
 				<key>alfredfiltersresultsmatchmode</key>
@@ -295,7 +282,7 @@ fi</string>
 				<key>escaping</key>
 				<integer>126</integer>
 				<key>keyword</key>
-				<string>tv</string>
+				<string>{var:tv_keyword}</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -307,9 +294,9 @@ fi</string>
 				<key>runningsubtext</key>
 				<string>Searching for "{query}"...</string>
 				<key>script</key>
-				<string>python3 media.py -t="tv" -q="{query}"</string>
+				<string>python3 media.py -t="tv" -q="${1}"</string>
 				<key>scriptargtype</key>
-				<integer>0</integer>
+				<integer>1</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
@@ -328,29 +315,25 @@ fi</string>
 			<key>version</key>
 			<integer>3</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>text</key>
+				<string>Search tv shows for '{query}'</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.fallback</string>
+			<key>uid</key>
+			<string>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
 	</array>
 	<key>readme</key>
-	<string>An Alfred workflow to search for a movie or tv show and get a few ratings.
+	<string>Run the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`) to search for movies and TV shows, respectively. Press ↩ to get details and ratings.
 
-Type 'movie', then a movie title. Hit ENTER on an item to get info.
-Type 'tv', then a tv show title. Hit ENTER on an item to get info.
-
-
-Workflow Environment Variables:
-- omdb_api_key (default: 1bf8d40a)
-This API key is included for communicating with the OMDb API. You can change it to your own if you'd like.
-
-- locale (default: US)
-This controls the movie/tv show certification shown (e.g. - PG-13). This also adjusts the results shown for JustWatch.
-
-- include_letterboxd (default: true)
-Include the Letterboxd item.
-
-- include_moviechat (default: true)
-Include the MovieChat item.
-
-- include_justwatch (default: true)
-Include the JustWatch item.</string>
+![](img/about/walle-search.png)
+![](img/about/walle-details.png)</string>
 	<key>uidata</key>
 	<dict>
 		<key>353BEDC8-43A6-4E94-BF56-DC1D770A19E2</key>
@@ -360,63 +343,192 @@ Include the JustWatch item.</string>
 			<key>note</key>
 			<string>OneUpdater</string>
 			<key>xpos</key>
-			<integer>680</integer>
+			<real>680</real>
 			<key>ypos</key>
-			<integer>10</integer>
+			<real>15</real>
 		</dict>
 		<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
 		<dict>
 			<key>xpos</key>
-			<integer>500</integer>
+			<real>500</real>
 			<key>ypos</key>
-			<real>10</real>
+			<real>15</real>
 		</dict>
 		<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 		<dict>
 			<key>xpos</key>
-			<integer>100</integer>
+			<real>100</real>
 			<key>ypos</key>
-			<integer>10</integer>
+			<real>15</real>
 		</dict>
 		<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 		<dict>
 			<key>xpos</key>
-			<integer>300</integer>
+			<real>300</real>
 			<key>ypos</key>
-			<real>10</real>
+			<real>15</real>
 		</dict>
 		<key>B8455555-F05D-4969-83C9-5DE09914B79D</key>
 		<dict>
 			<key>xpos</key>
-			<integer>300</integer>
+			<real>300</real>
 			<key>ypos</key>
-			<integer>150</integer>
+			<real>150</real>
 		</dict>
 		<key>FA1D6F95-2A45-46E1-A83E-9C93D722AB02</key>
 		<dict>
 			<key>xpos</key>
-			<integer>100</integer>
+			<real>100</real>
 			<key>ypos</key>
-			<integer>150</integer>
+			<real>150</real>
 		</dict>
 	</dict>
-	<key>variables</key>
-	<dict>
-		<key>include_justwatch</key>
-		<string>true</string>
-		<key>include_letterboxd</key>
-		<string>true</string>
-		<key>include_moviechat</key>
-		<string>true</string>
-		<key>locale</key>
-		<string>US</string>
-		<key>omdb_api_key</key>
-		<string>1bf8d40a</string>
-	</dict>
-	<key>variablesdontexport</key>
-	<array/>
+	<key>userconfigurationconfig</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>movie</string>
+				<key>placeholder</key>
+				<string></string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string></string>
+			<key>label</key>
+			<string>Movie Search Keyword</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>movie_keyword</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>tv</string>
+				<key>placeholder</key>
+				<string></string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Keywords used for searching movies and TV shows.</string>
+			<key>label</key>
+			<string>TV Search Keyword</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>tv_keyword</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>1bf8d40a</string>
+				<key>placeholder</key>
+				<string></string>
+				<key>required</key>
+				<true/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Get your own API key at https://omdbapi.com/apikey.aspx</string>
+			<key>label</key>
+			<string>OMDB API Key</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>omdb_api_key</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>US</string>
+				<key>placeholder</key>
+				<string></string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Controls the movie/tv show certification (e.g. PG-13) and the results for JustWatch.</string>
+			<key>label</key>
+			<string>Locale</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>locale</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>Letterboxd</string>
+			</dict>
+			<key>description</key>
+			<string></string>
+			<key>label</key>
+			<string>Extra Websites</string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>include_letterboxd</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>MovieChat</string>
+			</dict>
+			<key>description</key>
+			<string></string>
+			<key>label</key>
+			<string></string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>include_moviechat</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>JustWatch</string>
+			</dict>
+			<key>description</key>
+			<string></string>
+			<key>label</key>
+			<string></string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>include_justwatch</string>
+		</dict>
+	</array>
 	<key>version</key>
-	<string>2.12.2</string>
+	<string>2.13.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow</string>
 </dict>
