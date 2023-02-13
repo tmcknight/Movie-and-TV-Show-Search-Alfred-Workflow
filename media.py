@@ -44,10 +44,11 @@ def main(media_type, query):
     global METACRITIC_SEARCH_URL
     METACRITIC_SEARCH_URL += media_type + '/'
     api_key = DEFAULT_TMDB_API_KEY
+    language = os.environ["search_language"]
     m = re.match('([m|t])\:([0-9]*)', query)
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
-            item = get_tmdb_info(m.group(1), m.group(2), api_key)
+            item = get_tmdb_info(m.group(1), m.group(2), api_key, language)
             log('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
@@ -63,7 +64,9 @@ def main(media_type, query):
         try:
             url = f'{TMDB_API_URL}search/{media_type}'
             params = {"api_key": api_key,
-                      "query": query, "search_type": 'ngram'}
+                      "query": query,
+                      "search_type": 'ngram',
+                      "language": language}
             results = get_json(url, params)
         except Exception as e:
             log(e)
@@ -104,14 +107,14 @@ def get_tmdb_configuration(api_key):
     return get_json(url, params)
 
 
-def get_tmdb_info(item_type, item_id, api_key):
+def get_tmdb_info(item_type, item_id, api_key, language):
     url = TMDB_API_URL
     if item_type == 'm':
         url += 'movie/' + item_id
     elif item_type == 't':
         url += 'tv/' + item_id
     params = dict(
-        api_key=api_key, language='en', append_to_response='videos,external_ids,watch/providers,releases,content_ratings')
+        api_key=api_key, language=language, append_to_response='videos,external_ids,watch/providers,releases,content_ratings')
 
     return get_json(url, params)
 
