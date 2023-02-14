@@ -11,6 +11,7 @@ import urllib.request
 import re
 import json
 from mako.template import Template
+from unicodedata import normalize
 
 ICON_ROOT = '/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources'
 ICON_USER = os.path.join(ICON_ROOT, 'UserIcon.icns')
@@ -63,6 +64,7 @@ def main(media_type, query):
 
         try:
             url = f'{TMDB_API_URL}search/{media_type}'
+            query = normalize('NFC', query)
             params = {"api_key": api_key,
                       "query": query,
                       "search_type": 'ngram',
