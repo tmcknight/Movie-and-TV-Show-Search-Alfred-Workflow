@@ -303,15 +303,18 @@ def show_item_info(item, media_type):
 
     items.append({"title": omdb_info['Director'],
                   "subtitle": 'Director',
-                  "icon": {"path": ICON_USER}})
+                  "icon": {"path": ICON_USER},
+                  "text": {"copy": omdb_info['Director']}})
 
     items.append({"title": omdb_info['Writer'],
                   "subtitle": 'Writer',
-                  "icon": {"path": ICON_USER}})
+                  "icon": {"path": ICON_USER},
+                  "text": {"copy": omdb_info['Writer']}})
 
     items.append({"title": omdb_info['Actors'],
                   "subtitle": 'Actors',
-                  "icon": {"path": ICON_GROUP}})
+                  "icon": {"path": ICON_GROUP},
+                  "text": {"copy": omdb_info['Actors']}})
 
     generate_item_html(omdb_info, item, media_type)
 
