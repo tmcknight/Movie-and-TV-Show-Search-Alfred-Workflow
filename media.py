@@ -86,6 +86,8 @@ def main(media_type, query):
                 items.append({"title": "Nothing was found."})
             results['results'].sort(key=extract_popularity, reverse=True)
             for item in results['results']:
+                poster = 'https://image.tmdb.org/t/p/w500' + item['poster_path'] if item['poster_path'] else ''
+
                 if media_type == 'movie':
                     title = item['title']
                     if item.get('release_date', 0):
@@ -97,6 +99,7 @@ def main(media_type, query):
                 items.append({
                     "title": title,
                     "arg": str(item['id']),
+                    "quicklookurl": poster,
                     "valid": False,
                     "autocomplete": media_type[:1] + ':' + str(item['id'])
                 })
