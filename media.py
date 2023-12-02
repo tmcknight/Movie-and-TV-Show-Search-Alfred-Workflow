@@ -25,12 +25,14 @@ YOUTUBE_WATCH_URL = 'https://youtube.com/watch?v='
 METACRITIC_SEARCH_URL = 'https://metacritic.com/search/'
 ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
 LETTERBOXD_URL = 'https://letterboxd.com/tmdb/'
+SIMKL_URL = 'https://simkl.com/search'
 MOVIECHAT_URL = 'https://moviechat.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
 
 INCLUDE_LETTERBOXD = bool(strtobool(os.environ['include_letterboxd']))
+INCLUDE_SIMKL = bool(strtobool(os.environ['include_simkl']))
 INCLUDE_JUSTWATCH = bool(strtobool(os.environ['include_justwatch']))
 INCLUDE_MOVIECHAT = bool(strtobool(os.environ['include_moviechat']))
 
@@ -244,6 +246,17 @@ def show_item_info(item, media_type):
         items.append({"title": 'Letterboxd',
                       "subtitle": f"View '{item[title_key]}' on Letterboxd",
                       "icon": {"path": 'img/letterboxd.png'},
+                      "valid": True,
+                      "arg": search_url})
+
+    # Simkl
+    if INCLUDE_SIMKL:
+        simkl_media_type = 'movies' if media_type == 'movie' else 'tv'
+        search_url = f"{SIMKL_URL}/?type={simkl_media_type}&q={search}"
+        all_search_sites.append(search_url)
+        items.append({"title": 'Simkl',
+                      "subtitle": f"View '{item[title_key]}' on Simkl",
+                      "icon": {"path": 'img/simkl.png'},
                       "valid": True,
                       "arg": search_url})
 
