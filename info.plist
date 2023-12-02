@@ -552,6 +552,23 @@
 					<key>required</key>
 					<false/>
 					<key>text</key>
+					<string>Simkl</string>
+				</dict>
+				<key>description</key>
+				<string></string>
+				<key>type</key>
+				<string>checkbox</string>
+				<key>variable</key>
+				<string>include_simkl</string>
+			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>default</key>
+					<true/>
+					<key>required</key>
+					<false/>
+					<key>text</key>
 					<string>MovieChat</string>
 				</dict>
 				<key>description</key>
