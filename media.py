@@ -44,8 +44,6 @@ items = []
 
 def main(media_type, query):
 
-    global METACRITIC_SEARCH_URL
-    METACRITIC_SEARCH_URL += media_type + '/'
     api_key = DEFAULT_TMDB_API_KEY
     language = os.environ["search_language"]
     m = re.match('([m|t])\:([0-9]*)', query)
@@ -133,6 +131,7 @@ def get_omdb_info(imdb_id):
 
 
 def show_item_info(item, media_type):
+
     title_key = 'title'
     release_date_key = 'release_date'
     if media_type == 'movie':
@@ -224,7 +223,11 @@ def show_item_info(item, media_type):
                       "arg": search_url})
 
     # Metacritic
-    search_url = METACRITIC_SEARCH_URL + search + '/results'
+    search_url = METACRITIC_SEARCH_URL + search
+    if media_type == 'movie':
+        search_url += '/?category=2'
+    elif media_type == 'tv':
+        search_url += '/?category=1'
     all_search_sites.append(search_url)
     if omdb_info['Metascore'] != 'N/A':
         items.append({"title": omdb_info['Metascore'],
