@@ -165,7 +165,7 @@
 					<key>runningsubtext</key>
 					<string>Searching for "{query}"...</string>
 					<key>script</key>
-					<string>python3 media.py -t="movie" -q="${1}"</string>
+					<string>/usr/bin/python3 media.py -t="movie" -q="${1}"</string>
 					<key>scriptargtype</key>
 					<integer>1</integer>
 					<key>scriptfile</key>
@@ -209,7 +209,7 @@
 					<key>escaping</key>
 					<integer>0</integer>
 					<key>script</key>
-					<string>python3 openurls.py -u="${1}"</string>
+					<string>/usr/bin/python3 openurls.py -u="${1}"</string>
 					<key>scriptargtype</key>
 					<integer>1</integer>
 					<key>scriptfile</key>
@@ -332,7 +332,7 @@
 					<key>runningsubtext</key>
 					<string>Searching for "{query}"...</string>
 					<key>script</key>
-					<string>python3 media.py -t="tv" -q="${1}"</string>
+					<string>/usr/bin/python3 media.py -t="tv" -q="${1}"</string>
 					<key>scriptargtype</key>
 					<integer>1</integer>
 					<key>scriptfile</key>
