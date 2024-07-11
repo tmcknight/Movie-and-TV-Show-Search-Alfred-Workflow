@@ -1,6 +1,5 @@
 # encoding: utf-8
 from __future__ import unicode_literals, print_function
-from distutils.util import strtobool
 
 import os
 import sys
@@ -31,10 +30,10 @@ CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
 
-INCLUDE_LETTERBOXD = bool(strtobool(os.environ['include_letterboxd']))
-INCLUDE_SIMKL = bool(strtobool(os.environ['include_simkl']))
-INCLUDE_JUSTWATCH = bool(strtobool(os.environ['include_justwatch']))
-INCLUDE_MOVIECHAT = bool(strtobool(os.environ['include_moviechat']))
+INCLUDE_LETTERBOXD = os.environ['include_letterboxd'] == "1"
+INCLUDE_SIMKL = os.environ['include_simkl'] == "1"
+INCLUDE_JUSTWATCH = os.environ['include_justwatch'] == "1"
+INCLUDE_MOVIECHAT = os.environ['include_moviechat'] == "1"
 
 if not os.path.exists(CACHEDIR):
     os.makedirs(CACHEDIR)
