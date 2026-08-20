@@ -182,41 +182,34 @@ def show_item_info(item, media_type):
 
     # Rotten Tomatoes
     search_url = ROTTEN_TOMATOES_SEARCH_URL + search
-    if omdb_info['tomatoURL']:
+    if get_omdb_value(omdb_info, 'tomatoURL'):
         search_url = omdb_info['tomatoURL']
     all_search_sites.append(search_url)
-    if omdb_info['tomatoMeter'] != 'N/A':
-        tomatoIcon = 'img/fresh.png'
-        if omdb_info['tomatoImage'] == 'N/A':
-            tomatoIcon = 'img/noidea.png'
-        else:
-            tomatoIcon = 'img/' + omdb_info['tomatoImage'] + '.png'
 
-        items.append({"title": omdb_info['tomatoMeter'] + '%',
-                      "subtitle": 'Rotten Tomatoes (' + omdb_info['tomatoReviews'] + ' reviews, ' +
-                      omdb_info['tomatoFresh'] + ' fresh, ' +
-                      omdb_info['tomatoRotten'] + ' rotten)',
-                      "icon": {"path": tomatoIcon},
+    tomato_meter = get_omdb_value(omdb_info, 'tomatoMeter')
+    if not tomato_meter:
+        tomato_meter = get_rating(omdb_info, 'Rotten Tomatoes')
+    if tomato_meter:
+        items.append({"title": format_percentage(tomato_meter),
+                      "subtitle": get_tomato_subtitle(omdb_info),
+                      "icon": {"path": get_tomato_icon(omdb_info, tomato_meter)},
                       "valid": True,
                       "arg": search_url})
     else:
-        for rating in omdb_info['Ratings']:
-            if rating['Source'] == 'Rotten Tomatoes':
-                items.append({"title": rating['Value'],
-                              "subtitle": 'Rotten Tomatoes',
-                              "icon": {"path": 'img/fresh.png'},
-                              "valid": True,
-                              "arg": search_url})
+        items.append({"title": 'Rotten Tomatoes',
+                      "subtitle": f"Search Rotten Tomatoes for '{item[title_key]}'",
+                      "icon": {"path": 'img/fresh.png'},
+                      "valid": True,
+                      "arg": search_url})
 
-    if omdb_info['tomatoUserMeter'] != 'N/A':
+    tomato_user_meter = get_omdb_value(omdb_info, 'tomatoUserMeter')
+    if tomato_user_meter:
         tomatoUserIcon = 'img/rtliked.png'
-        if int(omdb_info['tomatoUserMeter']) < 60:
+        if get_score(tomato_user_meter) < 60:
             tomatoUserIcon = 'img/rtdisliked.png'
 
-        items.append({"title": omdb_info['tomatoUserMeter'] + '%',
-                      "subtitle": 'Rotten Tomatoes Audience Score (' + omdb_info['tomatoUserReviews'] +
-                      ' reviews, ' +
-                      omdb_info['tomatoUserRating'] + ' avg rating)',
+        items.append({"title": format_percentage(tomato_user_meter),
+                      "subtitle": get_tomato_user_subtitle(omdb_info),
                       "icon": {"path": tomatoUserIcon},
                       "valid": True,
                       "arg": search_url})
@@ -337,6 +330,73 @@ def show_item_info(item, media_type):
     generate_item_html(omdb_info, item, media_type)
 
     return
+
+
+def get_omdb_value(omdb_info, key):
+    """Return the value for key, or None when OMDb omits it or reports 'N/A'."""
+    value = omdb_info.get(key)
+    if not value or value == 'N/A':
+        return None
+    return value
+
+
+def get_rating(omdb_info, source):
+    """Return the score reported by source in OMDb's Ratings list, if present."""
+    for rating in omdb_info.get('Ratings', []):
+        if rating['Source'] == source:
+            return rating['Value']
+    return None
+
+
+def get_score(value):
+    """Parse a score like '89', '89%' or '8.9/10' into a number out of 100."""
+    match = re.match(r'\s*([0-9]+(?:\.[0-9]+)?)\s*(%|/\s*([0-9]+(?:\.[0-9]+)?))?', value)
+    if not match:
+        return 0
+    score = float(match.group(1))
+    if match.group(3):
+        score = score / float(match.group(3)) * 100
+    return score
+
+
+def format_percentage(value):
+    return value if '%' in value or '/' in value else value + '%'
+
+
+def get_tomato_icon(omdb_info, tomato_meter):
+    tomato_image = get_omdb_value(omdb_info, 'tomatoImage')
+    if tomato_image:
+        return 'img/' + tomato_image + '.png'
+    return 'img/fresh.png' if get_score(tomato_meter) >= 60 else 'img/rotten.png'
+
+
+def get_tomato_subtitle(omdb_info):
+    details = []
+    reviews = get_omdb_value(omdb_info, 'tomatoReviews')
+    fresh = get_omdb_value(omdb_info, 'tomatoFresh')
+    rotten = get_omdb_value(omdb_info, 'tomatoRotten')
+    if reviews:
+        details.append(reviews + ' reviews')
+    if fresh:
+        details.append(fresh + ' fresh')
+    if rotten:
+        details.append(rotten + ' rotten')
+    if details:
+        return 'Rotten Tomatoes (' + ', '.join(details) + ')'
+    return 'Rotten Tomatoes'
+
+
+def get_tomato_user_subtitle(omdb_info):
+    details = []
+    reviews = get_omdb_value(omdb_info, 'tomatoUserReviews')
+    rating = get_omdb_value(omdb_info, 'tomatoUserRating')
+    if reviews:
+        details.append(reviews + ' reviews')
+    if rating:
+        details.append(rating + ' avg rating')
+    if details:
+        return 'Rotten Tomatoes Audience Score (' + ', '.join(details) + ')'
+    return 'Rotten Tomatoes Audience Score'
 
 
 def generate_item_html(omdb_info, tmdb_info, media_type):
