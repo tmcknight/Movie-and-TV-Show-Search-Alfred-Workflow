@@ -439,7 +439,7 @@ def get_subtitle(tmdb_info, omdb_info, media_type):
                 break
     subtitleItems = []
     if omdb_info['Runtime'] != 'N/A':
-        subtitleItems.append(omdb_info['Runtime'])
+        subtitleItems.append(format_runtime(omdb_info['Runtime']))
     if omdb_info['Genre'] != 'N/A':
         subtitleItems.append(omdb_info['Genre'])
     if certification != 'N/A':
@@ -447,6 +447,21 @@ def get_subtitle(tmdb_info, omdb_info, media_type):
             certification = 'Rated ' + certification
         subtitleItems.append(certification)
     return ' \u2022 '.join(subtitleItems)
+
+
+def format_runtime(runtime):
+    match = re.match(r'^(\d+)\s*min$', runtime.strip())
+    if not match:
+        return runtime
+
+    minutes = int(match.group(1))
+    if minutes < 60:
+        return '{}m'.format(minutes)
+
+    hours, minutes = divmod(minutes, 60)
+    if minutes == 0:
+        return '{}h'.format(hours)
+    return '{}h {}m'.format(hours, minutes)
 
 
 def extract_popularity(result):
