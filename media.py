@@ -20,6 +20,7 @@ DEFAULT_TMDB_API_KEY = '0ebad901a16d3bf7f947b0a8d1808c44'
 TMDB_API_URL = 'https://api.themoviedb.org/3/'
 OMDB_API_URL = 'https://www.omdbapi.com/'
 IMDB_URL = 'https://imdb.com/'
+TVDB_SERIES_URL = 'https://thetvdb.com/dereferrer/series/'
 YOUTUBE_WATCH_URL = 'https://youtube.com/watch?v='
 METACRITIC_SEARCH_URL = 'https://metacritic.com/search/'
 ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
@@ -154,7 +155,10 @@ def show_item_info(item, media_type):
                   "subtitle": get_subtitle(item, omdb_info, media_type),
                   "valid": True,
                   # icon : "poster.jpg",
-                  "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE)})
+                  "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE),
+                  "text": {
+                      "copy": str(item['id'])}
+                  })
 
     search = urllib.parse.quote(item[title_key].encode(
         'utf-8'), safe=':'.encode('utf-8'))
@@ -178,7 +182,24 @@ def show_item_info(item, media_type):
                       "subtitle": f"Search IMDb for '{item[title_key]}'",
                       "icon": {"path": 'img/imdb.png'},
                       "valid": True,
-                      "arg": search_url})
+                      "arg": search_url,
+                      "text": {
+                          "copy": omdb_info['imdbID']}
+                      })
+
+    # TheTVDB
+    tvdb_id = item['external_ids']['tvdb_id'] if media_type == 'tv' else None
+    if tvdb_id:
+        search_url = TVDB_SERIES_URL + str(tvdb_id)
+        all_search_sites.append(search_url)
+        items.append({"title": 'TheTVDB',
+                      "subtitle": f"View '{item[title_key]}' on TheTVDB",
+                      "icon": {"path": 'img/tvdb.png'},
+                      "valid": True,
+                      "arg": search_url,
+                      "text": {
+                          "copy": str(tvdb_id)}
+                      })
 
     # Rotten Tomatoes
     search_url = ROTTEN_TOMATOES_SEARCH_URL + search
