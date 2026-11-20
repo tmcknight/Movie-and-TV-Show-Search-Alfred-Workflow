@@ -217,9 +217,11 @@ def links_html(links):
     if not links:
         return ''
     cells = [link_html(i, row) for i, row in enumerate(links)]
-    half = -(-len(cells) // 2)
-    order = [cell for pair in zip(cells[:half], cells[half:] + ['<span></span>']) for cell in pair]
-    return f'<nav class="links">{"".join(order)}</nav>'
+    # Keep the links in order in the page (⌘N follows it) and let the grid
+    # flow them down the columns.
+    rows = -(-len(cells) // 2)
+    return (f'<nav class="links" style="grid-template-rows: repeat({rows}, auto)">'
+            f'{"".join(cells)}</nav>')
 
 
 def link_html(index, row):
