@@ -61,6 +61,8 @@ TRAILER_TRIGGER_DELAY = 0.8
 # Workflow setting: play trailers in the trailer window instead of on YouTube.
 TRAILERS_IN_ALFRED = os.environ.get('trailers_in_alfred', '0') == '1'
 LOGO_MAX = {"width": 420, "height": 64}
+POSTER_BOX = {"width": 180, "height": 270}
+OVERVIEW_WIDTH = 460
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
 LINK_COL_WIDTH = 250
@@ -141,32 +143,54 @@ def build(item, rows):
     links = [row for row in rest if row.get('arg') and '||' not in row['arg']]
     people = [row for row in rest if not row.get('arg')]
 
-    update = {
-        "title": {"text": header['title']},
-        "subtitle": {"text": header['subtitle']},
-        "overview": {"text": clip(item.get('overview') or 'No overview available.',
-                                  OVERVIEW_MAX_CHARS)},
-    }
-    poster = download_image(item.get('poster_path'), POSTER_SIZE)
-    if poster:
-        update["poster"] = {"image": {"type": "file", "src": poster}}
+    title = title_logo(item, header['title']) or title_label(header['title'])
+    info = info_view(title, header['subtitle'],
+                     clip(item.get('overview') or 'No overview available.', OVERVIEW_MAX_CHARS),
+                     [credits_form(people), links_grid(links)])
+    replace = {"poster": poster_view(download_image(item.get('poster_path'), POSTER_SIZE)),
+               "info": info}
+    update = {}
     backdrop = blurred(download_image(item.get('backdrop_path'), BACKDROP_SIZE))
     if backdrop:
         update["backdrop"] = {"image": {"type": "file", "src": backdrop}}
 
-    replace = {
-        "credits": credits_form(people),
-        "links": links_grid(links),
-    }
-    logo = title_logo(item, header['title'])
-    if logo:
-        replace["title"] = logo
+    # ui.json opens on skeleton bars with the ids "poster" and "info"; swap
+    # them for the real views.
+    actions = {"replace": {"ids": replace}}
+    if update:
+        actions["update"] = {"ids": update, "relayout": True}
+    # Processed after update/replace: fit the window's height to them.
+    actions["window"] = {"resize": {"height": "auto"}}
+    return actions
 
+
+def poster_view(path):
+    image = {"type": "file", "src": path} if path else {"type": "symbol", "src": "film"}
+    return {"type": "imageview", "id": "poster", "resize": "fit", "cornerradius": 8,
+            "image": image,
+            "constraints": {"region": "left", "position": "top", "size": POSTER_BOX}}
+
+
+def title_label(text):
+    return {"type": "label", "id": "title", "text": text, "linebreak": "truncatetail",
+            "selectable": True, "font": {"size": "large", "weight": "bold"}}
+
+
+def info_view(title, subtitle, overview, details):
+    """The column right of the poster: title, subtitle, overview, then the
+    credits and links views."""
     return {
-        "update": {"ids": update, "relayout": True},
-        "replace": {"ids": replace},
-        # Processed after update/replace: fit the window's height to them.
-        "window": {"resize": {"height": "auto"}},
+        "type": "view", "id": "info", "layout": "inline", "direction": "vertical",
+        "spacing": 12, "constraints": {"region": "centre", "position": "top"},
+        "components": [
+            vstack(None, [title,
+                          {"type": "label", "id": "subtitle", "text": subtitle or " ",
+                           "linebreak": "truncatetail", "colour": "secondaryLabelColor"}],
+                   spacing=4),
+            {"type": "label", "id": "overview", "text": overview, "linebreak": "wordwrap",
+             "selectable": True, "constraints": {"size": {"width": OVERVIEW_WIDTH}}},
+            dict(vstack(None, details, spacing=14), constraints={"insets": {"top": 6}}),
+        ],
     }
 
 
@@ -247,8 +271,11 @@ def hrow(components, spacing=8):
 def vstack(view_id, components, spacing):
     # Never leave a view empty: an empty inline view inside a border region
     # gets a NaN height and crashes Alfred 6.0.2 (AUIInlineLayout).
-    return {"type": "view", "id": view_id, "layout": "inline", "direction": "vertical",
+    view = {"type": "view", "layout": "inline", "direction": "vertical",
             "spacing": spacing, "components": components or [BLANK_LABEL]}
+    if view_id:
+        view["id"] = view_id
+    return view
 
 
 def link_text(row):
@@ -512,10 +539,11 @@ def download_image(path, size):
 
 def error(message):
     # Exit 0: Alfred UI ignores stdout from a script that exits non-zero, which
-    # would leave the window stuck on "Loading…".
+    # would leave the window stuck on its skeleton.
     # The title is one truncating line, so the message goes in the overview.
-    emit({"update": {"ids": {"title": {"text": "Couldn't load details"},
-                             "overview": {"text": message}}, "relayout": True},
+    emit({"replace": {"ids": {
+              "poster": poster_view(None),
+              "info": info_view(title_label("Couldn't load details"), " ", message, [])}},
           "window": {"resize": {"height": "auto"}}})
     return 0
 

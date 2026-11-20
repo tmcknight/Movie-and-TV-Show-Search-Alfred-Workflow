@@ -102,14 +102,17 @@
           "spacing": 20,
           "components": [
             {
-              "type": "imageview",
+              "type": "view",
               "id": "poster",
-              "resize": "fit",
+              "layout": "stack",
+              "background": "#FFFFFF1F",
               "cornerradius": 8,
-              "image": {
-                "type": "symbol",
-                "src": "film"
-              },
+              "components": [
+                {
+                  "type": "label",
+                  "text": " "
+                }
+              ],
               "constraints": {
                 "region": "left",
                 "position": "top",
@@ -123,6 +126,7 @@
               "type": "view",
               "id": "info",
               "layout": "inline",
+              "direction": "vertical",
               "spacing": 12,
               "constraints": {
                 "region": "centre",
@@ -133,71 +137,183 @@
                   "type": "view",
                   "layout": "inline",
                   "direction": "vertical",
-                  "spacing": 4,
+                  "spacing": 8,
                   "components": [
                     {
-                      "type": "label",
-                      "id": "title",
-                      "text": "Loading…",
-                      "linebreak": "truncatetail",
-                      "selectable": true,
-                      "font": {
-                        "size": "large",
-                        "weight": "bold"
+                      "type": "view",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 6,
+                      "cliptobounds": true,
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 260,
+                          "height": 26
+                        }
                       }
                     },
                     {
-                      "type": "label",
-                      "id": "subtitle",
-                      "text": " ",
-                      "linebreak": "truncatetail",
-                      "colour": "secondaryLabelColor"
+                      "type": "view",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 190,
+                          "height": 14
+                        }
+                      }
                     }
                   ]
-                },
-                {
-                  "type": "label",
-                  "id": "overview",
-                  "text": "",
-                  "linebreak": "wordwrap",
-                  "selectable": true,
-                  "constraints": {
-                    "size": {
-                      "width": 460
-                    }
-                  }
                 },
                 {
                   "type": "view",
                   "layout": "inline",
                   "direction": "vertical",
-                  "spacing": 14,
+                  "spacing": 7,
                   "components": [
                     {
                       "type": "view",
-                      "id": "credits",
-                      "layout": "inline",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
                       "components": [
                         {
                           "type": "label",
                           "text": " "
                         }
                       ],
-                      "direction": "vertical",
-                      "spacing": 4
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 460,
+                          "height": 13
+                        }
+                      }
                     },
                     {
                       "type": "view",
-                      "id": "links",
-                      "layout": "inline",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
                       "components": [
                         {
                           "type": "label",
                           "text": " "
                         }
                       ],
-                      "direction": "vertical",
-                      "spacing": 2
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 450,
+                          "height": 13
+                        }
+                      }
+                    },
+                    {
+                      "type": "view",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 460,
+                          "height": 13
+                        }
+                      }
+                    },
+                    {
+                      "type": "view",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 300,
+                          "height": 13
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "view",
+                  "layout": "inline",
+                  "direction": "vertical",
+                  "spacing": 8,
+                  "components": [
+                    {
+                      "type": "view",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 70,
+                          "height": 14
+                        }
+                      }
+                    },
+                    {
+                      "type": "view",
+                      "layout": "stack",
+                      "background": "#FFFFFF1F",
+                      "cornerradius": 4,
+                      "cliptobounds": true,
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "constraints": {
+                        "position": "left",
+                        "size": {
+                          "width": 220,
+                          "height": 14
+                        }
+                      }
                     }
                   ],
                   "constraints": {
@@ -205,9 +321,165 @@
                       "top": 6
                     }
                   }
+                },
+                {
+                  "type": "view",
+                  "layout": "inline",
+                  "direction": "horizontal",
+                  "spacing": 12,
+                  "constraints": {
+                    "position": "left"
+                  },
+                  "components": [
+                    {
+                      "type": "view",
+                      "layout": "inline",
+                      "direction": "vertical",
+                      "spacing": 10,
+                      "components": [
+                        {
+                          "type": "view",
+                          "layout": "stack",
+                          "background": "#FFFFFF1F",
+                          "cornerradius": 4,
+                          "cliptobounds": true,
+                          "components": [
+                            {
+                              "type": "label",
+                              "text": " "
+                            }
+                          ],
+                          "constraints": {
+                            "position": "left",
+                            "size": {
+                              "width": 150,
+                              "height": 14
+                            }
+                          }
+                        },
+                        {
+                          "type": "view",
+                          "layout": "stack",
+                          "background": "#FFFFFF1F",
+                          "cornerradius": 4,
+                          "cliptobounds": true,
+                          "components": [
+                            {
+                              "type": "label",
+                              "text": " "
+                            }
+                          ],
+                          "constraints": {
+                            "position": "left",
+                            "size": {
+                              "width": 150,
+                              "height": 14
+                            }
+                          }
+                        },
+                        {
+                          "type": "view",
+                          "layout": "stack",
+                          "background": "#FFFFFF1F",
+                          "cornerradius": 4,
+                          "cliptobounds": true,
+                          "components": [
+                            {
+                              "type": "label",
+                              "text": " "
+                            }
+                          ],
+                          "constraints": {
+                            "position": "left",
+                            "size": {
+                              "width": 150,
+                              "height": 14
+                            }
+                          }
+                        }
+                      ],
+                      "constraints": {
+                        "size": {
+                          "width": 250
+                        }
+                      }
+                    },
+                    {
+                      "type": "view",
+                      "layout": "inline",
+                      "direction": "vertical",
+                      "spacing": 10,
+                      "components": [
+                        {
+                          "type": "view",
+                          "layout": "stack",
+                          "background": "#FFFFFF1F",
+                          "cornerradius": 4,
+                          "cliptobounds": true,
+                          "components": [
+                            {
+                              "type": "label",
+                              "text": " "
+                            }
+                          ],
+                          "constraints": {
+                            "position": "left",
+                            "size": {
+                              "width": 150,
+                              "height": 14
+                            }
+                          }
+                        },
+                        {
+                          "type": "view",
+                          "layout": "stack",
+                          "background": "#FFFFFF1F",
+                          "cornerradius": 4,
+                          "cliptobounds": true,
+                          "components": [
+                            {
+                              "type": "label",
+                              "text": " "
+                            }
+                          ],
+                          "constraints": {
+                            "position": "left",
+                            "size": {
+                              "width": 150,
+                              "height": 14
+                            }
+                          }
+                        },
+                        {
+                          "type": "view",
+                          "layout": "stack",
+                          "background": "#FFFFFF1F",
+                          "cornerradius": 4,
+                          "cliptobounds": true,
+                          "components": [
+                            {
+                              "type": "label",
+                              "text": " "
+                            }
+                          ],
+                          "constraints": {
+                            "position": "left",
+                            "size": {
+                              "width": 150,
+                              "height": 14
+                            }
+                          }
+                        }
+                      ],
+                      "constraints": {
+                        "size": {
+                          "width": 250
+                        }
+                      }
+                    }
+                  ]
                 }
-              ],
-              "direction": "vertical"
+              ]
             }
           ],
           "constraints": {
