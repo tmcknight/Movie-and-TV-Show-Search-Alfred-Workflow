@@ -71,7 +71,7 @@
         {
           "type": "imageview",
           "id": "backdrop",
-          "resize": "fill",
+          "resize": "fit",
           "image": null,
           "constraints": {
             "insets": {

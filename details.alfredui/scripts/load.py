@@ -45,8 +45,11 @@ BACKDROP_SIZE = 'w300'
 # Alfred UI has no blur or text shadow. Shrinking the backdrop this far and
 # letting the imageview scale it up blurs it, so no detail fights the text.
 BACKDROP_BLUR_WIDTH = 120
-# The backdrop sits right of the poster and fades in over its left third.
+# The backdrop sits right of the poster at its own 16:9 shape (vertically
+# centred when the window is taller), fading in over its left third and its
+# top and bottom fifths.
 BACKDROP_FADE = 0.35
+BACKDROP_FADE_EDGE = 0.2
 LOGO_SIZE = 'w500'
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
@@ -323,7 +326,7 @@ def blurred(path):
     UI draws no gradients, so the fade is baked into the image's alpha."""
     if not path:
         return None
-    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}-fade.png'
+    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}-fade2.png'
     if not os.path.exists(target):
         bmp = target[:-4] + '.bmp'
         try:
@@ -364,16 +367,21 @@ def read_bmp(data):
     return width, abs(height), rows
 
 
+def ramp(position, length):
+    """0 at the edge, rising smoothly to 1 at length (smoothstep)."""
+    t = min(1.0, position / max(1, length))
+    return t * t * (3 - 2 * t)
+
+
 def png_with_fade(width, height, rows):
-    """An RGBA PNG of rows whose alpha rises smoothly from 0 at the left edge
-    to opaque BACKDROP_FADE of the way across."""
-    fade = max(1, round(width * BACKDROP_FADE))
-    alphas = []
-    for x in range(width):
-        t = min(1.0, x / fade)
-        alphas.append(round(255 * t * t * (3 - 2 * t)))  # smoothstep
-    raw = b''.join(b'\x00' + bytes(v for (r, g, b), a in zip(row, alphas) for v in (r, g, b, a))
-                   for row in rows)
+    """An RGBA PNG of rows whose alpha fades to 0 at the left, top and bottom
+    edges, so the image blends into the dark window wherever it ends."""
+    across = [ramp(x, width * BACKDROP_FADE) for x in range(width)]
+    raw = b''
+    for y, row in enumerate(rows):
+        down = ramp(min(y, height - 1 - y), height * BACKDROP_FADE_EDGE)
+        raw += b'\x00' + bytes(v for (r, g, b), a in zip(row, across)
+                               for v in (r, g, b, round(255 * a * down)))
 
     def chunk(kind, body):
         return (struct.pack('>I', len(body)) + kind + body
