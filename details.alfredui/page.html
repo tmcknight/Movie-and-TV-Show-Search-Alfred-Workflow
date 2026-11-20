@@ -5,6 +5,7 @@
        #h=<px>       fit the window's height to the page
        #copy=<file>  copy the poster image
        #trailer=<id> open the trailer window
+       #back         go back to the details list (←)
      Every hash ends in &t=<time>, so repeating one still changes the URL. -->
 <html class="{{class}}">
 <meta charset="utf-8">
@@ -53,12 +54,17 @@
   .poster .placeholder { display: grid; place-items: center; height: 100%; color: var(--tertiary); }
   .poster button {
     position: absolute; left: 50%; bottom: 10px; transform: translate(-50%, 4px);
-    padding: 5px 12px; border: 0; border-radius: 999px;
-    font: 500 12px -apple-system, sans-serif; color: #fff;
+    display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
+    border: 0; border-radius: 50%; color: #fff;
     background: rgba(30, 30, 30, .7); -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25);
-    opacity: 0; transition: opacity .15s, transform .15s;
+    opacity: 0; transition: opacity .15s, transform .15s, background .15s;
   }
+  .poster button svg { grid-area: 1 / 1; width: 15px; height: 15px; transition: opacity .12s, transform .12s; }
+  .poster button .check { opacity: 0; transform: scale(.6); }
+  .poster button.done { background: rgba(48, 160, 80, .85); }
+  .poster button.done .copy { opacity: 0; transform: scale(.6); }
+  .poster button.done .check { opacity: 1; transform: none; }
   .poster:hover button, .poster button.done { opacity: 1; transform: translate(-50%, 0); }
   .poster button:hover { background: rgba(60, 60, 60, .8); }
 
@@ -150,14 +156,18 @@
     e.preventDefault();
     say(target.dataset.hash);
     if (target.matches('button')) {
-      target.textContent = 'Copied';
+      // Copy icon → checkmark for a moment.
       target.classList.add('done');
       clearTimeout(target.timer);
-      target.timer = setTimeout(() => {
-        target.textContent = 'Copy';
-        target.classList.remove('done');
-      }, 1500);
+      target.timer = setTimeout(() => target.classList.remove('done'), 1500);
     }
+  });
+
+  // ← goes back to the details list, like ⎋.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' || e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    say('back');
   });
 
   // ⌘1–⌘9 open the links in order, like Alfred's own result shortcuts.

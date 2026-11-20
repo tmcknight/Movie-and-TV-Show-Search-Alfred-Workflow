@@ -65,6 +65,11 @@ FILM_ICON = ('<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-
              '<path d="M4.5 2.5v11M11.5 2.5v11M1.5 6h3M1.5 10h3M11.5 6h3M11.5 10h3"/></svg>')
 # Link rows that have no icon file.
 LINK_SVGS = {'TMDb': FILM_ICON}
+COPY_ICON = ('<svg class="copy" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">'
+             '<rect x="5.5" y="5.5" width="8" height="8" rx="1.8"/>'
+             '<path d="M10.5 3.2A1.8 1.8 0 0 0 8.8 2H4.3a1.8 1.8 0 0 0-1.8 1.8v4.5a1.8 1.8 0 0 0 1.2 1.7"/></svg>')
+CHECK_ICON = ('<svg class="check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" '
+              'stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>')
 PLAY_ICON = '<svg viewBox="0 0 10 12"><path d="M0 0v12l10-6z" fill="currentColor"/></svg>'
 
 
@@ -202,7 +207,8 @@ def poster_html(path):
         return f'<div class="poster"><div class="placeholder" style="width: 48px; margin: auto">{FILM_ICON}</div></div>'
     name = os.path.basename(path)
     return (f'<div class="poster"><img src="{data_uri(path)}" alt="" draggable="false">'
-            f'<button data-hash="copy={esc(name)}">Copy</button></div>')
+            f'<button data-hash="copy={esc(name)}" title="Copy poster" aria-label="Copy poster">'
+            f'{COPY_ICON}{CHECK_ICON}</button></div>')
 
 
 def credits_html(people):

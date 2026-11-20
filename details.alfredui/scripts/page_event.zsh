@@ -27,6 +27,16 @@ function run(argv) {
 }
 JXA
     ;;
+  back)
+    # Alfred has no action for going back a view, but ⎋ does it, and the
+    # window has keyboard focus (← was just pressed in it). Post the key
+    # with CoreGraphics: unlike System Events, it needs no Automation
+    # permission prompt, only the Accessibility access Alfred already has.
+    osascript -l JavaScript -e '
+      ObjC.import("CoreGraphics");
+      for (const down of [true, false])
+        $.CGEventPost($.kCGHIDEventTap, $.CGEventCreateKeyboardEvent($(), 53, down));'
+    ;;
   trailer=[A-Za-z0-9_-]##)
     exec "${0:A:h}/load.py" "${hash#trailer=}" --open-trailer
     ;;
