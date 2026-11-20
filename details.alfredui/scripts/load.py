@@ -19,6 +19,7 @@ arrives here and decides what happens:
 The page talks back through its URL hash; see page.html and page_event.zsh.
 """
 import base64
+import hashlib
 import html
 import json
 import os
@@ -47,16 +48,21 @@ POSTER_SIZE = 'w342'
 # The page only lightly blurs the backdrop, so it needs some detail.
 BACKDROP_SIZE = 'w780'
 LOGO_SIZE = 'w500'
+IMAGE_TIMEOUT = 5
 TRAILER_PORT = 47826
 TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
 # Fallback when the local player server can't start: YouTube's own page.
 TRAILER_FALLBACK_URL = 'https://m.youtube.com/watch?v={key}'
+ITEM_REF = re.compile(r'^[mt]:\d+$')
 VIDEO_ID = re.compile(r'^[A-Za-z0-9_-]{6,20}$')
 TRAILER_TRIGGER_DELAY = 0.8
 # Workflow setting: play trailers in the trailer window instead of on YouTube.
 TRAILERS_IN_ALFRED = os.environ.get('trailers_in_alfred', '0') == '1'
 OVERVIEW_MAX_CHARS = 550
 CACHE_SECONDS = 600
+# Workflow settings that change the page.
+PAGE_SETTINGS = ('search_language', 'locale', 'trailers_in_alfred', 'include_letterboxd',
+                 'include_simkl', 'include_moviechat', 'include_justwatch')
 CREDIT_NAMES = {'Actors': 'Cast'}
 SITE_NAMES = {'Rotten Tomatoes Audience Score': 'Audience'}
 MIME_TYPES = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg'}
@@ -82,6 +88,9 @@ def route(ref):
     elif '://' in ref:
         openurls.main(ref)
         emit({"finish": {"args": ""}})
+    elif not ITEM_REF.match(ref):
+        # Not a link or an item (e.g. a credits row): nothing to show.
+        emit({"finish": {}})
     else:
         # Show the details page straight away if the details list warmed it
         # up, else the loading skeleton until "launched" builds it.
@@ -90,18 +99,15 @@ def route(ref):
 
 
 def main(ref):
-    if '://' in (ref or ''):
-        return 0  # already opened by route() on preload
+    if not ITEM_REF.match(ref or ''):
+        return 0  # a link, already opened by route() on preload
 
     cached = read_cache(window_cache(ref))
     if cached:
         emit(cached)
         return 0
 
-    kind, _, tmdb_id = (ref or '').partition(':')
-    if kind not in ('m', 't') or not tmdb_id.isdigit():
-        return error(f"Unknown item '{ref}'.")
-
+    kind, _, tmdb_id = ref.partition(':')
     media_type = 'movie' if kind == 'm' else 'tv'
     try:
         item = media.get_tmdb_info(kind, tmdb_id, media.DEFAULT_TMDB_API_KEY,
@@ -126,9 +132,12 @@ def warm(ref):
     """Run in the background by the details list (media.py), which has just
     fetched this item: build the window from its data and download the poster
     now, so the window opens already filled in."""
-    data = read_cache(media.details_cache(ref))
-    if data:
+    try:
+        with open(media.details_cache(ref)) as f:
+            data = json.load(f)
         write_cache(window_cache(ref), build(data['item'], data['rows']))
+    except (OSError, ValueError, KeyError, IndexError) as e:
+        media.log(repr(e))
     return 0
 
 
@@ -162,7 +171,7 @@ def build(item, rows):
         '</div>',
     ]
     ref = header.get('arg') or f"m:{item.get('id')}"
-    return show_page(write_page('page-' + ref.replace(':', '-'), '', ''.join(body)))
+    return show_page(write_page('page-' + cache_name(ref), '', ''.join(body)))
 
 
 def show_page(path):
@@ -173,7 +182,7 @@ def write_page(name, page_class, body):
     with open(PAGE_TEMPLATE) as f:
         page = f.read().replace('{{class}}', page_class).replace('{{body}}', body)
     path = os.path.join(media.CACHEDIR, name + '.html')
-    tmp = path + '.tmp'
+    tmp = f'{path}.{os.getpid()}.tmp'
     with open(tmp, 'w') as f:
         f.write(page)
     os.replace(tmp, path)
@@ -327,9 +336,15 @@ def error(message):
 
 
 def window_cache(ref):
-    # The trailer button depends on the trailer setting, so cache per setting.
-    suffix = '-trailers' if TRAILERS_IN_ALFRED else ''
-    return os.path.join(media.CACHEDIR, 'window-' + (ref or '').replace(':', '-') + suffix + '.json')
+    return os.path.join(media.CACHEDIR, f"window-{cache_name(ref)}.json")
+
+
+def cache_name(ref):
+    """The page depends on the workflow's settings (which sites, language,
+    trailers), so cached pages are kept per combination of them."""
+    settings = '|'.join(os.environ.get(name, '') for name in PAGE_SETTINGS)
+    digest = hashlib.sha1(settings.encode()).hexdigest()[:8]
+    return f"{(ref or '').replace(':', '-')}-{digest}"
 
 
 def read_cache(path):
@@ -346,10 +361,7 @@ def read_cache(path):
 
 
 def write_cache(path, data):
-    tmp = path + '.tmp'
-    with open(tmp, 'w') as f:
-        json.dump(data, f)
-    os.replace(tmp, path)
+    media.write_json(path, data)
 
 
 def clip(text, limit):
@@ -468,10 +480,22 @@ def download_image(path, size):
         return None
     target = os.path.join(media.CACHEDIR, size + path.replace('/', '-'))
     if not os.path.exists(target):
+        # Download to a temporary name, so a failed download never leaves a
+        # broken file that looks cached, and give up rather than stall.
+        tmp = f'{target}.{os.getpid()}.tmp'
         try:
-            urllib.request.urlretrieve(IMAGE_URL + size + path, target)
+            with urllib.request.urlopen(IMAGE_URL + size + path,
+                                        timeout=IMAGE_TIMEOUT) as r:
+                data = r.read()
+            with open(tmp, 'wb') as f:
+                f.write(data)
+            os.replace(tmp, target)
         except Exception as e:
             media.log(repr(e))
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
             return None
     return target
 
