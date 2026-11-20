@@ -126,6 +126,8 @@ def build(item, rows):
             "credits": credits_form(people),
             "links": links_grid(links),
         }},
+        # Processed after update/replace: fit the window's height to them.
+        "window": {"resize": {"height": "auto"}},
     }
 
 
