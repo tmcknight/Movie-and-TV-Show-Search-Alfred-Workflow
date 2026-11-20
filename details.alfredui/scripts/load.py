@@ -56,6 +56,9 @@ TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
 # Fallback when the local player server can't start: YouTube's own page.
 TRAILER_FALLBACK_URL = 'https://m.youtube.com/watch?v={key}'
 TRAILER_SIZE = {"width": 560, "height": 315}
+# Trailer-only window opened from the details list: 16:9 at a typical theme
+# width (the player letterboxes on black if the theme is wider or narrower).
+TRAILER_WINDOW_HEIGHT = 405
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
@@ -72,7 +75,16 @@ LINK_SYMBOLS = {'TMDb': 'film'}
 
 
 def route(ref):
-    if '://' in (ref or ''):
+    ref = ref or ''
+    if ref.startswith(media.YOUTUBE_WATCH_URL) and '||' not in ref:
+        # The details list's Watch Trailer row: the window shows just the
+        # player instead of opening the browser. ⎋ returns to the list.
+        key = ref[len(media.YOUTUBE_WATCH_URL):]
+        emit({"replace": {"ids": {"content": {
+                  "type": "webkitview", "id": "content", "src": trailer_page(key),
+                  "openlinksexternally": True}}},
+              "window": {"resize": {"height": TRAILER_WINDOW_HEIGHT}}})
+    elif '://' in ref:
         openurls.main(ref)
         emit({"finish": {"args": ""}})
     else:
@@ -311,12 +323,16 @@ def link_action(url):
 def trailer(key):
     """Run when Watch Trailer is clicked: open the trailer sheet on the local
     player page, starting its server if needed."""
-    url = media.YOUTUBE_WATCH_URL + key
-    page = TRAILER_FALLBACK_URL.format(key=key)
-    if re.match(r'^[A-Za-z0-9_-]{6,20}$', key or '') and trailer_server():
-        page = TRAILER_PAGE_URL.format(port=TRAILER_PORT, key=key)
-    emit(trailer_sheet(url, page))
+    emit(trailer_sheet(media.YOUTUBE_WATCH_URL + key, trailer_page(key)))
     return 0
+
+
+def trailer_page(key):
+    """The local clean player page for a YouTube id, starting its server if
+    needed, or YouTube's own page if that fails."""
+    if re.match(r'^[A-Za-z0-9_-]{6,20}$', key or '') and trailer_server():
+        return TRAILER_PAGE_URL.format(port=TRAILER_PORT, key=key)
+    return TRAILER_FALLBACK_URL.format(key=key)
 
 
 def trailer_server():
