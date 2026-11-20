@@ -11,6 +11,7 @@ import urllib.request
 import re
 import json
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from mako.template import Template
 from unicodedata import normalize
 
@@ -34,6 +35,10 @@ CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
 MAX_SAVED_TITLES = 500
+# Search results show a small poster as their icon, at its own 2:3 shape.
+RESULT_POSTER_SIZE = 'w92'
+RESULT_POSTER_TIMEOUT = 3
+NO_POSTER_ICON = 'img/no-poster.png'
 
 INCLUDE_LETTERBOXD = os.environ.get('include_letterboxd', '0') == "1"
 INCLUDE_SIMKL = os.environ.get('include_simkl', '0') == "1"
@@ -98,6 +103,7 @@ def main(media_type, query):
             results['results'].sort(key=extract_popularity, reverse=True)
             titles = {}
             seen = {}
+            posters = result_posters(results['results'])
             for item in results['results']:
                 poster = 'https://image.tmdb.org/t/p/w500' + item['poster_path'] if item['poster_path'] else ''
 
@@ -122,8 +128,40 @@ def main(media_type, query):
                     "valid": False,
                     "autocomplete": title
                 })
+                # "fit" keeps the poster's shape in Alfred's square icon; a
+                # blank poster shape stands in for a missing one.
+                items[-1]["icon"] = {"path": posters.get(item['id']) or NO_POSTER_ICON,
+                                     "resize": "fit"}
             save_titles(media_type, titles)
     output_items()
+
+
+def result_posters(results):
+    """Small posters for search results, by TMDb id: Alfred's icons must be
+    local files, so download the ones not cached yet, all at once."""
+    folder = os.path.join(CACHEDIR, 'posters')
+    os.makedirs(folder, exist_ok=True)
+
+    def fetch(result):
+        path = result.get('poster_path')
+        if not path:
+            return result['id'], None
+        target = os.path.join(folder, RESULT_POSTER_SIZE + path.replace('/', '-'))
+        if not os.path.exists(target):
+            try:
+                url = 'https://image.tmdb.org/t/p/' + RESULT_POSTER_SIZE + path
+                with urllib.request.urlopen(url, timeout=RESULT_POSTER_TIMEOUT) as r:
+                    data = r.read()
+                with open(target + '.tmp', 'wb') as f:
+                    f.write(data)
+                os.replace(target + '.tmp', target)
+            except Exception as e:
+                log(repr(e))
+                return result['id'], None
+        return result['id'], target
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        return dict(pool.map(fetch, results))
 
 
 def titles_cache(media_type):
