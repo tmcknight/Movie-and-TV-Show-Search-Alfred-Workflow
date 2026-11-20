@@ -47,9 +47,9 @@ BACKDROP_SIZE = 'w300'
 BACKDROP_BLUR_WIDTH = 120
 # The backdrop sits right of the poster at its own 16:9 shape (vertically
 # centred when the window is taller), fading in over its left third and its
-# top and bottom fifths.
+# top and bottom tenths.
 BACKDROP_FADE = 0.35
-BACKDROP_FADE_EDGE = 0.2
+BACKDROP_FADE_EDGE = 0.1
 LOGO_SIZE = 'w500'
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
@@ -326,7 +326,7 @@ def blurred(path):
     UI draws no gradients, so the fade is baked into the image's alpha."""
     if not path:
         return None
-    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}-fade2.png'
+    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}-fade{BACKDROP_FADE}-{BACKDROP_FADE_EDGE}.png'
     if not os.path.exists(target):
         bmp = target[:-4] + '.bmp'
         try:
