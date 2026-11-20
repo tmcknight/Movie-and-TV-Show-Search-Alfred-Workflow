@@ -19,6 +19,7 @@ arg arrives here and decides what happens:
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -39,6 +40,9 @@ POSTER_SIZE = 'w342'
 # The backdrop sits dimmed behind a scrim, so the smallest size is plenty, and
 # a small image can't push the window taller when it resizes to fit.
 BACKDROP_SIZE = 'w300'
+# Alfred UI has no blur or text shadow. Shrinking the backdrop this far and
+# letting the imageview scale it up blurs it, so no detail fights the text.
+BACKDROP_BLUR_WIDTH = 48
 LOGO_SIZE = 'w500'
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
@@ -125,7 +129,7 @@ def build(item, rows):
     poster = download_image(item.get('poster_path'), POSTER_SIZE)
     if poster:
         update["poster"] = {"image": {"type": "file", "src": poster}}
-    backdrop = download_image(item.get('backdrop_path'), BACKDROP_SIZE)
+    backdrop = blurred(download_image(item.get('backdrop_path'), BACKDROP_SIZE))
     if backdrop:
         update["backdrop"] = {"image": {"type": "file", "src": backdrop}}
 
@@ -307,6 +311,23 @@ def title_logo(item, title):
             "image": {"type": "file", "src": path},
             "constraints": {"position": "left",
                             "size": {"width": round(height * ratio), "height": round(height)}}}
+
+
+def blurred(path):
+    """A tiny copy of the image at path (made with macOS's sips), or path
+    itself if that fails."""
+    if not path:
+        return None
+    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}.png'
+    if not os.path.exists(target):
+        try:
+            subprocess.run(['/usr/bin/sips', '-s', 'format', 'png',
+                            '--resampleWidth', str(BACKDROP_BLUR_WIDTH), path, '--out', target],
+                           check=True, capture_output=True, timeout=5)
+        except (OSError, subprocess.SubprocessError) as e:
+            media.log(repr(e))
+            return path
+    return target
 
 
 def download_image(path, size):

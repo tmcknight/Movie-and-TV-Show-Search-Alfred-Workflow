@@ -78,7 +78,7 @@
           "type": "view",
           "id": "scrim",
           "layout": "stack",
-          "background": "#000000b3",
+          "background": "#000000bf",
           "components": [
             {
               "type": "label",
