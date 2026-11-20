@@ -51,7 +51,10 @@ BACKDROP_BLUR_WIDTH = 120
 BACKDROP_FADE = 0.35
 BACKDROP_FADE_EDGE = 0.1
 LOGO_SIZE = 'w500'
-TRAILER_EMBED_URL = 'https://m.youtube.com/watch?v={key}'
+TRAILER_PORT = 47826
+TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
+# Fallback when the local player server can't start: YouTube's own page.
+TRAILER_FALLBACK_URL = 'https://m.youtube.com/watch?v={key}'
 TRAILER_SIZE = {"width": 560, "height": 315}
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
@@ -285,10 +288,7 @@ def link_cell(index, row):
         "text": link_text(row),
         "bordered": False,
         "tooltip": row['arg'] + (f"  (⌘{index + 1})" if index < 9 else ''),
-        "events": [{
-            "triggers": "actioned",
-            "action": {"type": "json", "src": link_action(row['arg'])},
-        }],
+        "events": [{"triggers": "actioned", "action": link_action(row['arg'])}],
     })
     if index < 9:
         # ⌘1–⌘9 open the links in order, like Alfred's own result shortcuts.
@@ -302,17 +302,57 @@ def link_action(url):
     """Open a link in the browser, except YouTube trailers, which play in a
     sheet over the window (Esc closes it)."""
     if url.startswith(media.YOUTUBE_WATCH_URL):
-        return trailer_sheet(url)
-    return {"open": {"type": "url", "src": url}}
+        # A script, so the local player server starts only when it's needed.
+        key = url[len(media.YOUTUBE_WATCH_URL):]
+        return {"type": "script", "src": "./scripts/load.py", "args": [key, "--trailer"]}
+    return {"type": "json", "src": {"open": {"type": "url", "src": url}}}
 
 
-def trailer_sheet(url):
-    key = url[len(media.YOUTUBE_WATCH_URL):]
+def trailer(key):
+    """Run when Watch Trailer is clicked: open the trailer sheet on the local
+    player page, starting its server if needed."""
+    url = media.YOUTUBE_WATCH_URL + key
+    page = TRAILER_FALLBACK_URL.format(key=key)
+    if re.match(r'^[A-Za-z0-9_-]{6,20}$', key or '') and trailer_server():
+        page = TRAILER_PAGE_URL.format(port=TRAILER_PORT, key=key)
+    emit(trailer_sheet(url, page))
+    return 0
+
+
+def trailer_server():
+    """True once our player server answers on TRAILER_PORT, starting it if
+    nothing is listening there."""
+    if ping_trailer_server():
+        return True
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'trailer_server.py')
+    try:
+        subprocess.Popen([sys.executable, script, str(TRAILER_PORT)],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError as e:
+        media.log(repr(e))
+        return False
+    for _ in range(20):
+        time.sleep(0.1)
+        if ping_trailer_server():
+            return True
+    return False
+
+
+def ping_trailer_server():
+    try:
+        with urllib.request.urlopen(f'http://127.0.0.1:{TRAILER_PORT}/ping', timeout=0.5) as r:
+            return r.read() == b'movies-trailer'
+    except OSError:
+        return False
+
+
+def trailer_sheet(url, page):
     return {"sheet": {"id": "trailer", "closeonescape": True, "root": {
         "type": "view", "layout": "inline", "direction": "vertical", "spacing": 10,
         "components": [
             {"type": "webkitview", "id": "player",
-             "src": TRAILER_EMBED_URL.format(key=key),
+             "src": page,
              # Clicks inside the player (e.g. the YouTube logo) go to the browser.
              "openlinksexternally": True,
              "constraints": {"size": TRAILER_SIZE}},
@@ -456,4 +496,4 @@ def emit(actions):
 if __name__ == '__main__':
     ref = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('item')
     mode = sys.argv[2] if len(sys.argv) > 2 else ''
-    sys.exit({'--route': route, '--warm': warm}.get(mode, main)(ref))
+    sys.exit({'--route': route, '--warm': warm, '--trailer': trailer}.get(mode, main)(ref))
