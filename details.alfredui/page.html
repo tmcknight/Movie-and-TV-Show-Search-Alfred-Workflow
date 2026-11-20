@@ -1,0 +1,146 @@
+<!doctype html>
+<!-- The details window's page. load.py fills in {{class}} and {{body}}.
+     The page talks back to the window through its URL hash, which fires the
+     webkitview's "changed" event (scripts/page_event.zsh):
+       #h=<px>       fit the window's height to the page
+       #copy=<file>  copy the poster image
+       #trailer=<id> open the trailer window
+     Every hash ends in &t=<time>, so repeating one still changes the URL. -->
+<html class="{{class}}">
+<meta charset="utf-8">
+<style>
+  :root {
+    color-scheme: dark;
+    --text: #fff;
+    --secondary: rgba(255, 255, 255, .62);
+    --tertiary: rgba(255, 255, 255, .4);
+    --hover: rgba(255, 255, 255, .1);
+    --bone: rgba(255, 255, 255, .09);
+    --bone-shine: rgba(255, 255, 255, .17);
+  }
+  html, body { margin: 0; background: #1b1b1d; overflow: hidden; }
+  body {
+    font: 13px/1.42 -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    -webkit-user-select: none;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { position: relative; display: flex; gap: 20px; padding: 20px; isolation: isolate; }
+
+  /* Backdrop: blurred, right of the poster, fading in from the left. */
+  .backdrop {
+    position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; left: 200px;
+    background: center / cover no-repeat;
+    filter: blur(18px) saturate(1.25);
+    opacity: .5;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 40%),
+                        linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+    -webkit-mask-composite: source-in;
+  }
+  main::after {
+    content: ""; position: absolute; z-index: -1; inset: 0;
+    background: linear-gradient(to right, #1b1b1d 200px, rgba(27, 27, 29, .35));
+  }
+
+  /* Poster, with a Copy button on hover. */
+  .poster {
+    position: relative; flex: none; width: 180px; height: 270px;
+    border-radius: 8px; overflow: hidden; background: var(--bone);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .45), 0 0 0 .5px rgba(255, 255, 255, .12);
+  }
+  .poster img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .poster .placeholder { display: grid; place-items: center; height: 100%; color: var(--tertiary); }
+  .poster button {
+    position: absolute; left: 50%; bottom: 10px; transform: translate(-50%, 4px);
+    padding: 5px 12px; border: 0; border-radius: 999px;
+    font: 500 12px -apple-system, sans-serif; color: #fff;
+    background: rgba(30, 30, 30, .7); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25);
+    opacity: 0; transition: opacity .15s, transform .15s;
+  }
+  .poster:hover button, .poster button.done { opacity: 1; transform: translate(-50%, 0); }
+  .poster button:hover { background: rgba(60, 60, 60, .8); }
+
+  /* Info column. */
+  .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .heading { display: flex; flex-direction: column; gap: 4px; }
+  h1 {
+    margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .logo { display: block; max-width: min(420px, 100%); max-height: 64px; object-fit: contain;
+          object-position: left; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .5)); }
+  .subtitle { color: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .overview { margin: 0; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+  .selectable { -webkit-user-select: text; cursor: text; }
+
+  .credits { display: grid; grid-template-columns: 64px 1fr; gap: 3px 0; margin-top: 4px; }
+  .credits dt { color: var(--secondary); }
+  .credits dd { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin: 2px -6px 0; }
+  .links a {
+    display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 6px;
+    border-radius: 6px; color: var(--text); text-decoration: none;
+    white-space: nowrap; overflow: hidden;
+  }
+  .links a:hover { background: var(--hover); }
+  .links a:active { background: rgba(255, 255, 255, .16); }
+  .links img, .links svg { flex: none; width: 16px; height: 16px; }
+  .links .label { overflow: hidden; text-overflow: ellipsis; }
+  .links .key { margin-left: auto; padding-left: 8px; color: var(--tertiary); font-size: 11px; opacity: 0; }
+  .links a:hover .key { opacity: 1; }
+  .dot { color: var(--secondary); }
+
+  /* Skeleton, while the details load. */
+  .bone { border-radius: 4px; background: var(--bone); }
+  .skeleton .bone, .skeleton .poster {
+    background: linear-gradient(100deg, var(--bone) 40%, var(--bone-shine) 50%, var(--bone) 60%) 0 0 / 300% 100%;
+    animation: shine 1.4s linear infinite;
+  }
+  .skeleton .poster { box-shadow: none; }
+  @keyframes shine { from { background-position: 100% 0; } to { background-position: 0 0; } }
+  .skeleton .links { margin: 6px 0 0; gap: 10px 12px; }
+</style>
+<body>
+<main>{{body}}</main>
+<script>
+  const say = hash => { location.hash = hash + '&t=' + Date.now(); };
+
+  // Fit the window to the page once its images have loaded.
+  addEventListener('load', () => {
+    if (document.documentElement.classList.contains('skeleton')) return;
+    say('h=' + Math.ceil(document.querySelector('main').getBoundingClientRect().height));
+  });
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  document.addEventListener('click', e => {
+    const target = e.target.closest('[data-hash]');
+    if (!target) return;
+    e.preventDefault();
+    say(target.dataset.hash);
+    if (target.matches('button')) {
+      target.textContent = 'Copied';
+      target.classList.add('done');
+      clearTimeout(target.timer);
+      target.timer = setTimeout(() => {
+        target.textContent = 'Copy';
+        target.classList.remove('done');
+      }, 1500);
+    }
+  });
+
+  // ⌘1–⌘9 open the links in order, like Alfred's own result shortcuts.
+  document.addEventListener('keydown', e => {
+    if (!e.metaKey || e.altKey || e.ctrlKey || !/^[1-9]$/.test(e.key)) return;
+    const link = document.querySelectorAll('.links a')[e.key - 1];
+    if (link) {
+      e.preventDefault();
+      link.click();
+    }
+  });
+</script>
+</body>
+</html>

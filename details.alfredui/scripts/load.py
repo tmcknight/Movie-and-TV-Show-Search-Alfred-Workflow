@@ -1,36 +1,39 @@
 #!/usr/bin/python3
 """Fill the details window with TMDb/OMDb data.
 
-Every row of the details list is connected straight to the Alfred UI object
-(a Conditional in between would stop ⎋ returning to the list), so the row's
-arg arrives here and decides what happens:
+The window is one webkitview showing a page built from page.html. Every row
+of the details list is connected straight to the Alfred UI object (a
+Conditional in between would stop ⎋ returning to the list), so the row's arg
+arrives here and decides what happens:
 
 - "load.py <arg> --route" runs on the window's "preload" event, which holds
   the window back until it returns, so it must be fast. A "||"-delimited list
   of URLs (every row but the title row) is opened and the UI finishes before
-  it ever shows. Anything else prints {}.
+  it ever shows. For a title, the page is the cached details page if the
+  details list warmed it up, else the loading skeleton.
 - "load.py m:<tmdb id>" / "t:<tmdb id>" runs on "launched" (the title row):
-  print JSON actions that fill the window, fetching the details first unless
-  they are cached.
+  build the details page, fetching the details first unless they are cached.
 - "load.py <ref> --warm" is started in the background by the details list,
-  which has just fetched the item, so the window is cached before ↩. When it
-  is, the preload step fills the window before it shows.
+  which has just fetched the item, so the page is ready before ↩.
+
+The page talks back through its URL hash; see page.html and page_event.zsh.
 """
+import base64
 import html
 import json
 import os
 import plistlib
 import re
-import struct
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
-import zlib
 
 WORKFLOW_DIR = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
+PAGE_TEMPLATE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             'page.html')
 
 # media.py loads templates and icons by paths relative to the workflow folder.
 os.chdir(WORKFLOW_DIR)
@@ -41,17 +44,8 @@ import openurls  # noqa: E402
 
 IMAGE_URL = 'https://image.tmdb.org/t/p/'
 POSTER_SIZE = 'w342'
-# The backdrop sits dimmed behind a scrim, so the smallest size is plenty, and
-# a small image can't push the window taller when it resizes to fit.
+# The page blurs the backdrop, so the smallest size is plenty.
 BACKDROP_SIZE = 'w300'
-# Alfred UI has no blur or text shadow. Shrinking the backdrop this far and
-# letting the imageview scale it up blurs it, so no detail fights the text.
-BACKDROP_BLUR_WIDTH = 120
-# The backdrop sits right of the poster at its own 16:9 shape (vertically
-# centred when the window is taller), fading in over its left third and its
-# top and bottom tenths.
-BACKDROP_FADE = 0.35
-BACKDROP_FADE_EDGE = 0.1
 LOGO_SIZE = 'w500'
 TRAILER_PORT = 47826
 TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
@@ -61,54 +55,16 @@ VIDEO_ID = re.compile(r'^[A-Za-z0-9_-]{6,20}$')
 TRAILER_TRIGGER_DELAY = 0.8
 # Workflow setting: play trailers in the trailer window instead of on YouTube.
 TRAILERS_IN_ALFRED = os.environ.get('trailers_in_alfred', '0') == '1'
-LOGO_MAX = {"width": 420, "height": 64}
-POSTER_BOX = {"width": 180, "height": 270}
-OVERVIEW_WIDTH = 460
-POSTER_PAGE = """<!doctype html>
-<meta charset="utf-8">
-<style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #000;
-               -webkit-user-select: none; cursor: default; }
-  img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  button { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
-           padding: 5px 12px; border: 0; border-radius: 999px;
-           font: 500 12px -apple-system, sans-serif; color: #fff;
-           background: rgba(30, 30, 30, .72); -webkit-backdrop-filter: blur(12px);
-           box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25);
-           opacity: 0; transition: opacity .15s; }
-  body:hover button, button.done { opacity: 1; }
-  button:hover { background: rgba(60, 60, 60, .8); }
-</style>
-<img src="{src}" alt="" draggable="false">
-<button>Copy</button>
-<script>
-  const button = document.querySelector('button');
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  button.addEventListener('click', () => {
-    // The details window's script copies the image when the URL changes.
-    location.hash = 'copy-' + Date.now();
-    button.textContent = 'Copied';
-    button.classList.add('done');
-    clearTimeout(button.timer);
-    button.timer = setTimeout(() => {
-      button.textContent = 'Copy';
-      button.classList.remove('done');
-    }, 1500);
-  });
-</script>
-"""
-LINK_ICON_SIZE = {"width": 16, "height": 16}
-LINK_ROW_HEIGHT = 24
-LINK_COL_WIDTH = 250
-LINK_GAP = 12
-CREDIT_KEY_WIDTH = 64
-BLANK_LABEL = {"type": "label", "text": " "}
 OVERVIEW_MAX_CHARS = 550
 CACHE_SECONDS = 600
 CREDIT_NAMES = {'Actors': 'Cast'}
 SITE_NAMES = {'Rotten Tomatoes Audience Score': 'Audience'}
-# SF Symbols for link rows that have no icon file.
-LINK_SYMBOLS = {'TMDb': 'film'}
+MIME_TYPES = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg'}
+FILM_ICON = ('<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3">'
+             '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/>'
+             '<path d="M4.5 2.5v11M11.5 2.5v11M1.5 6h3M1.5 10h3M11.5 6h3M11.5 10h3"/></svg>')
+# Link rows that have no icon file.
+LINK_SVGS = {'TMDb': FILM_ICON}
 
 
 def route(ref):
@@ -121,9 +77,9 @@ def route(ref):
         openurls.main(ref)
         emit({"finish": {"args": ""}})
     else:
-        # Fill the window before it shows if the details list warmed it up;
-        # an empty result is logged as invalid JSON, so send {} instead.
-        emit(read_cache(window_cache(ref)) or {})
+        # Show the details page straight away if the details list warmed it
+        # up, else the loading skeleton until "launched" builds it.
+        emit(read_cache(window_cache(ref)) or show_page(skeleton_page()))
     return 0
 
 
@@ -171,76 +127,157 @@ def warm(ref):
 
 
 def build(item, rows):
-    """JSON actions that fill the window, from a TMDb item and the details
-    list rows that media.show_item_info made for it."""
+    """JSON actions that show the details page, from a TMDb item and the
+    details list rows that media.show_item_info made for it."""
     header, rest = rows[0], rows[1:]
     links = [row for row in rest if row.get('arg') and '||' not in row['arg']]
-    people = [row for row in rest if not row.get('arg')]
+    people = [row for row in rest
+              if not row.get('arg') and row['title'] and row['title'] != 'N/A']
 
-    title = title_logo(item, header['title']) or title_label(header['title'])
-    info = info_view(title, header['subtitle'],
-                     clip(item.get('overview') or 'No overview available.', OVERVIEW_MAX_CHARS),
-                     [credits_form(people), links_grid(links)])
-    replace = {"poster": poster_view(download_image(item.get('poster_path'), POSTER_SIZE)),
-               "info": info}
-    update = {}
-    backdrop = blurred(download_image(item.get('backdrop_path'), BACKDROP_SIZE))
-    if backdrop:
-        update["backdrop"] = {"image": {"type": "file", "src": backdrop}}
+    poster = download_image(item.get('poster_path'), POSTER_SIZE)
+    backdrop = download_image(item.get('backdrop_path'), BACKDROP_SIZE)
+    logo = title_logo(item)
+    title = esc(header['title'])
+    body = [
+        f'<div class="backdrop" style="background-image: url({data_uri(backdrop)})"></div>'
+        if backdrop else '',
+        poster_html(poster),
+        '<div class="info">',
+        '<div class="heading">',
+        f'<img class="logo" src="{data_uri(logo)}" alt="{title}" title="{title}">' if logo
+        else f'<h1 class="selectable">{title}</h1>',
+        f'<div class="subtitle">{esc(header.get("subtitle") or "")}</div>',
+        '</div>',
+        '<p class="overview selectable">'
+        + esc(clip(item.get('overview') or 'No overview available.', OVERVIEW_MAX_CHARS))
+        + '</p>',
+        credits_html(people),
+        links_html(links),
+        '</div>',
+    ]
+    ref = header.get('arg') or f"m:{item.get('id')}"
+    return show_page(write_page('page-' + ref.replace(':', '-'), '', ''.join(body)))
 
-    # ui.json opens on skeleton bars with the ids "poster" and "info"; swap
-    # them for the real views.
-    actions = {"replace": {"ids": replace}}
-    if update:
-        actions["update"] = {"ids": update, "relayout": True}
-    # Processed after update/replace: fit the window's height to them.
-    actions["window"] = {"resize": {"height": "auto"}}
-    return actions
+
+def show_page(path):
+    return {"update": {"ids": {"page": {"src": path}}}}
 
 
-def poster_view(path):
-    """The poster, with a Copy button that shows on hover. Alfred UI has no
-    hover event, so the poster is a small web page in a webkitview; the
-    button changes the page's URL, which fires the view's "changed" event."""
+def write_page(name, page_class, body):
+    with open(PAGE_TEMPLATE) as f:
+        page = f.read().replace('{{class}}', page_class).replace('{{body}}', body)
+    path = os.path.join(media.CACHEDIR, name + '.html')
+    tmp = path + '.tmp'
+    with open(tmp, 'w') as f:
+        f.write(page)
+    os.replace(tmp, path)
+    return path
+
+
+def skeleton_page():
+    """The page the window opens on while the details load: shimmering bars
+    where the poster, title, overview, credits and links will go."""
+    path = os.path.join(media.CACHEDIR, 'skeleton.html')
+    try:
+        if os.path.getmtime(path) >= os.path.getmtime(PAGE_TEMPLATE):
+            return path
+    except OSError:
+        pass
+    bone = '<div class="bone" style="width: {}; height: {}px"></div>'.format
+    lines = ''.join(bone(w, 13) for w in ('100%', '96%', '100%', '62%'))
+    links = ''.join(bone('60%', 14) for _ in range(6))
+    body = ('<div class="poster"></div><div class="info">'
+            f'<div class="heading" style="gap: 8px">{bone("55%", 26)}{bone("40%", 14)}</div>'
+            f'<div class="heading" style="gap: 7px">{lines}</div>'
+            f'<div class="heading" style="gap: 8px; margin-top: 6px">{bone("30%", 14)}{bone("48%", 14)}</div>'
+            f'<div class="links">{links}</div></div>')
+    return write_page('skeleton', 'skeleton', body)
+
+
+def poster_html(path):
     if not path:
-        return {"type": "imageview", "id": "poster", "resize": "fit", "cornerradius": 8,
-                "image": {"type": "symbol", "src": "film"},
-                "constraints": {"region": "left", "position": "top", "size": POSTER_BOX}}
-    page = os.path.splitext(path)[0] + '.html'
-    if not os.path.exists(page):
-        with open(page, 'w') as f:
-            f.write(POSTER_PAGE.replace('{src}', html.escape(os.path.basename(path))))
-    return {"type": "view", "id": "poster", "layout": "stack", "cornerradius": 8,
-            "cliptobounds": True, "background": "#000000",
-            "constraints": {"region": "left", "position": "top", "size": POSTER_BOX},
-            "components": [{
-                "type": "webkitview", "src": page,
-                "events": [{"triggers": "changed", "action": {
-                    "type": "script", "src": "./scripts/copy_poster.zsh",
-                    "args": ["{value:self.src}", path], "async": True}}]}]}
+        return f'<div class="poster"><div class="placeholder" style="width: 48px; margin: auto">{FILM_ICON}</div></div>'
+    name = os.path.basename(path)
+    return (f'<div class="poster"><img src="{data_uri(path)}" alt="" draggable="false">'
+            f'<button data-hash="copy={esc(name)}">Copy</button></div>')
 
 
-def title_label(text):
-    return {"type": "label", "id": "title", "text": text, "linebreak": "truncatetail",
-            "selectable": True, "font": {"size": "large", "weight": "bold"}}
+def credits_html(people):
+    if not people:
+        return ''
+    rows = ''.join(
+        f'<dt>{esc(CREDIT_NAMES.get(row["subtitle"], row["subtitle"]))}</dt>'
+        f'<dd class="selectable" title="{esc(row["title"])}">{esc(row["title"])}</dd>'
+        for row in people)
+    return f'<dl class="credits">{rows}</dl>'
 
 
-def info_view(title, subtitle, overview, details):
-    """The column right of the poster: title, subtitle, overview, then the
-    credits and links views."""
-    return {
-        "type": "view", "id": "info", "layout": "inline", "direction": "vertical",
-        "spacing": 12, "constraints": {"region": "centre", "position": "top"},
-        "components": [
-            vstack(None, [title,
-                          {"type": "label", "id": "subtitle", "text": subtitle or " ",
-                           "linebreak": "truncatetail", "colour": "secondaryLabelColor"}],
-                   spacing=4),
-            {"type": "label", "id": "overview", "text": overview, "linebreak": "wordwrap",
-             "selectable": True, "constraints": {"size": {"width": OVERVIEW_WIDTH}}},
-            dict(vstack(None, details, spacing=14), constraints={"insets": {"top": 6}}),
-        ],
-    }
+def links_html(links):
+    """Two columns of links, filled down the first column, then the second."""
+    if not links:
+        return ''
+    cells = [link_html(i, row) for i, row in enumerate(links)]
+    half = -(-len(cells) // 2)
+    order = [cell for pair in zip(cells[:half], cells[half:] + ['<span></span>']) for cell in pair]
+    return f'<nav class="links">{"".join(order)}</nav>'
+
+
+def link_html(index, row):
+    url = row['arg']
+    title = row['title']
+    icon = LINK_SVGS.get(title)
+    if not icon and row.get('icon', {}).get('path'):
+        icon = f'<img src="{data_uri(os.path.join(WORKFLOW_DIR, row["icon"]["path"]))}" alt="">'
+    label = esc(link_text(row)).replace('  ·  ', ' <span class="dot">·</span> ')
+    key = f'<span class="key">⌘{index + 1}</span>' if index < 9 else ''
+    if TRAILERS_IN_ALFRED and url.startswith(media.YOUTUBE_WATCH_URL):
+        # Opens the trailer window through page_event.zsh instead.
+        target = f'href="#" data-hash="trailer={esc(url[len(media.YOUTUBE_WATCH_URL):])}"'
+    else:
+        target = f'href="{esc(url)}"'
+    return f'<a {target} title="{esc(url)}">{icon or ""}<span class="label">{label}</span>{key}</a>'
+
+
+def esc(text):
+    return html.escape(str(text), quote=True)
+
+
+_data_uris = {}
+
+
+def data_uri(path):
+    """The page's images are inlined, so it loads in one go and needs no
+    file access beyond itself."""
+    if path not in _data_uris:
+        mime = MIME_TYPES.get(os.path.splitext(path)[1].lower(), 'image/png')
+        with open(path, 'rb') as f:
+            _data_uris[path] = f'data:{mime};base64,' + base64.b64encode(f.read()).decode()
+    return _data_uris[path]
+
+
+def title_logo(item):
+    """Path of the film's clear logo (the transparent PNGs Plex shows), or
+    None."""
+    logos = [logo for logo in item.get('images', {}).get('logos', [])
+             if logo.get('file_path', '').endswith('.png')]
+    if not logos:
+        return None
+    # TMDb lists the search language, English and language-less logos mixed;
+    # take the first in that order of preference.
+    language = os.environ.get('search_language', 'en')
+    rank = {language: 0, 'en': 1, None: 2}
+    logo = min(logos, key=lambda logo: rank.get(logo.get('iso_639_1'), 3))
+    return download_image(logo['file_path'], LOGO_SIZE)
+
+
+def error(message):
+    # Exit 0: Alfred UI ignores stdout from a script that exits non-zero, which
+    # would leave the window stuck on its skeleton.
+    body = (poster_html(None) + '<div class="info"><div class="heading">'
+            "<h1>Couldn't load details</h1></div>"
+            f'<p class="overview selectable">{esc(message)}</p></div>')
+    emit(show_page(write_page('error', '', body)))
+    return 0
 
 
 def window_cache(ref):
@@ -253,8 +290,11 @@ def read_cache(path):
     try:
         if time.time() - os.path.getmtime(path) < CACHE_SECONDS:
             with open(path) as f:
-                return json.load(f)
-    except (OSError, ValueError):
+                actions = json.load(f)
+            # The cached actions point at a page file; make sure it's there.
+            if os.path.exists(actions["update"]["ids"]["page"]["src"]):
+                return actions
+    except (OSError, ValueError, KeyError, TypeError):
         pass
     return None
 
@@ -271,60 +311,6 @@ def clip(text, limit):
     if len(text) <= limit:
         return text
     return text[:limit].rsplit(' ', 1)[0].rstrip(',.;:—-') + '…'
-
-
-def credits_form(people):
-    rows = []
-    for row in people:
-        if not row['title'] or row['title'] == 'N/A':
-            continue
-        rows.append(hrow([
-            {"type": "label", "text": CREDIT_NAMES.get(row['subtitle'], row['subtitle']),
-             "colour": "secondaryLabelColor", "textalign": "left",
-             "constraints": {"size": {"width": CREDIT_KEY_WIDTH}}},
-            {"type": "label", "text": row['title'], "tooltip": row['title'],
-             "linebreak": "truncatetail", "selectable": True},
-        ]))
-    return vstack("credits", rows, spacing=4)
-
-
-def links_grid(links):
-    """Two left-aligned columns of links. Alfred UI centres content in grid
-    cells and in fixed-width horizontal rows, but a vertical inline column
-    with left-pinned rows lines up cleanly."""
-    cells = [link_cell(i, row) for i, row in enumerate(links)]
-    half = -(-len(cells) // 2)
-    columns = [cells[:half], cells[half:]]
-    if len(columns[1]) < len(columns[0]):
-        # The row centres a shorter column vertically; pad it to keep the
-        # two columns' rows level.
-        spacer = hrow([BLANK_LABEL])
-        spacer["constraints"] = {"position": "left", "size": {"height": LINK_ROW_HEIGHT}}
-        columns[1].append(spacer)
-    return {"type": "view", "id": "links", "layout": "inline", "direction": "horizontal",
-            "spacing": LINK_GAP, "constraints": {"position": "left"},
-            "components": [{"type": "view", "layout": "inline", "direction": "vertical",
-                            "spacing": 2,
-                            "constraints": {"size": {"width": LINK_COL_WIDTH}},
-                            "components": column or [BLANK_LABEL]}
-                           for column in columns]}
-
-
-def hrow(components, spacing=8):
-    # A vertical inline layout centres narrower rows; pin them left.
-    return {"type": "view", "layout": "inline", "direction": "horizontal",
-            "spacing": spacing, "constraints": {"position": "left"},
-            "components": components}
-
-
-def vstack(view_id, components, spacing):
-    # Never leave a view empty: an empty inline view inside a border region
-    # gets a NaN height and crashes Alfred 6.0.2 (AUIInlineLayout).
-    view = {"type": "view", "layout": "inline", "direction": "vertical",
-            "spacing": spacing, "components": components or [BLANK_LABEL]}
-    if view_id:
-        view["id"] = view_id
-    return view
 
 
 def link_text(row):
@@ -349,52 +335,6 @@ def compact(n):
         if n >= size:
             return f"{n / size:.1f}".rstrip('0').rstrip('.') + suffix
     return str(n)
-
-
-def link_cell(index, row):
-    """Icon + borderless button. A button's own image overlaps its text, so
-    the icon is a separate imageview beside it."""
-    components = []
-    icon = row.get('icon', {}).get('path')
-    symbol = LINK_SYMBOLS.get(row['title'])
-    if symbol:
-        components.append({
-            "type": "imageview",
-            "image": {"type": "symbol", "src": symbol},
-            "constraints": {"size": LINK_ICON_SIZE, "position": "centre"},
-        })
-    elif icon:
-        components.append({
-            "type": "imageview",
-            "image": {"type": "file", "src": os.path.join(WORKFLOW_DIR, icon)},
-            "constraints": {"size": LINK_ICON_SIZE, "position": "centre"},
-        })
-    components.append({
-        "type": "button",
-        "id": f"link{index}",
-        "text": link_text(row),
-        "bordered": False,
-        "tooltip": row['arg'] + (f"  (⌘{index + 1})" if index < 9 else ''),
-        "events": [{"triggers": "actioned", "action": link_action(row['arg'])}],
-    })
-    if index < 9:
-        # ⌘1–⌘9 open the links in order, like Alfred's own result shortcuts.
-        components[-1]["shortcut"] = f"⌘{index + 1}"
-    view = hrow(components, spacing=6)
-    view["constraints"] = {"position": "left", "size": {"height": LINK_ROW_HEIGHT}}
-    return view
-
-
-def link_action(url):
-    """Open a link in the browser, except YouTube trailers when the workflow
-    is set to play them in the trailer window."""
-    if TRAILERS_IN_ALFRED and url.startswith(media.YOUTUBE_WATCH_URL):
-        # A finish action from a click doesn't reach the connected trailer
-        # window (only one sent before this window shows does), so a script
-        # starts it through the workflow's "trailer" External Trigger.
-        key = url[len(media.YOUTUBE_WATCH_URL):]
-        return {"type": "script", "src": "./scripts/load.py", "args": [key, "--open-trailer"]}
-    return {"type": "json", "src": {"open": {"type": "url", "src": url}}}
 
 
 def play_trailer(url):
@@ -476,102 +416,6 @@ def ping_trailer_server():
         return False
 
 
-def title_logo(item, title):
-    """The title as the film's clear logo (the transparent PNGs Plex shows),
-    sized to the logo's own aspect ratio: an imageview centres an image that
-    doesn't fill it, which would push the logo off the left edge."""
-    logos = [logo for logo in item.get('images', {}).get('logos', [])
-             if logo.get('file_path', '').endswith('.png') and logo.get('aspect_ratio')]
-    if not logos:
-        return None
-    # TMDb lists the search language, English and language-less logos mixed;
-    # take the first in that order of preference.
-    language = os.environ.get('search_language', 'en')
-    rank = {language: 0, 'en': 1, None: 2}
-    logo = min(logos, key=lambda logo: rank.get(logo.get('iso_639_1'), 3))
-    path = download_image(logo['file_path'], LOGO_SIZE)
-    if not path:
-        return None
-    ratio = logo['aspect_ratio']
-    height = min(LOGO_MAX['height'], LOGO_MAX['width'] / ratio)
-    return {"type": "imageview", "id": "title", "resize": "fit", "tooltip": title,
-            "image": {"type": "file", "src": path},
-            "constraints": {"position": "left",
-                            "size": {"width": round(height * ratio), "height": round(height)}}}
-
-
-def blurred(path):
-    """A tiny copy of the image at path whose left edge fades out, or path
-    itself if that fails. The imageview scales it up, which blurs it; Alfred
-    UI draws no gradients, so the fade is baked into the image's alpha."""
-    if not path:
-        return None
-    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}-fade{BACKDROP_FADE}-{BACKDROP_FADE_EDGE}.png'
-    if not os.path.exists(target):
-        bmp = target[:-4] + '.bmp'
-        try:
-            subprocess.run(['/usr/bin/sips', '-s', 'format', 'bmp',
-                            '--resampleWidth', str(BACKDROP_BLUR_WIDTH), path, '--out', bmp],
-                           check=True, capture_output=True, timeout=5)
-            with open(bmp, 'rb') as f:
-                width, height, rows = read_bmp(f.read())
-            with open(target, 'wb') as f:
-                f.write(png_with_fade(width, height, rows))
-        except (OSError, ValueError, subprocess.SubprocessError) as e:
-            media.log(repr(e))
-            return path
-        finally:
-            if os.path.exists(bmp):
-                os.remove(bmp)
-    return target
-
-
-def read_bmp(data):
-    """Pixel rows of an uncompressed 24/32-bit BMP (what sips writes), top
-    row first, as lists of (r, g, b)."""
-    if data[:2] != b'BM':
-        raise ValueError('not a BMP')
-    offset, = struct.unpack_from('<I', data, 10)
-    width, height, _, bpp, compression = struct.unpack_from('<iiHHI', data, 18)
-    if bpp not in (24, 32) or compression not in (0, 3):
-        raise ValueError(f'unsupported BMP: {bpp} bpp, compression {compression}')
-    step = bpp // 8
-    stride = (width * step + 3) & ~3
-    rows = []
-    for y in range(abs(height)):
-        start = offset + y * stride
-        rows.append([(data[i + 2], data[i + 1], data[i])
-                     for i in range(start, start + width * step, step)])
-    if height > 0:  # stored bottom-up
-        rows.reverse()
-    return width, abs(height), rows
-
-
-def ramp(position, length):
-    """0 at the edge, rising smoothly to 1 at length (smoothstep)."""
-    t = min(1.0, position / max(1, length))
-    return t * t * (3 - 2 * t)
-
-
-def png_with_fade(width, height, rows):
-    """An RGBA PNG of rows whose alpha fades to 0 at the left, top and bottom
-    edges, so the image blends into the dark window wherever it ends."""
-    across = [ramp(x, width * BACKDROP_FADE) for x in range(width)]
-    raw = b''
-    for y, row in enumerate(rows):
-        down = ramp(min(y, height - 1 - y), height * BACKDROP_FADE_EDGE)
-        raw += b'\x00' + bytes(v for (r, g, b), a in zip(row, across)
-                               for v in (r, g, b, round(255 * a * down)))
-
-    def chunk(kind, body):
-        return (struct.pack('>I', len(body)) + kind + body
-                + struct.pack('>I', zlib.crc32(kind + body)))
-    return (b'\x89PNG\r\n\x1a\n'
-            + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0))
-            + chunk(b'IDAT', zlib.compress(raw, 9))
-            + chunk(b'IEND', b''))
-
-
 def download_image(path, size):
     """Alfred UI images load from files only, so cache TMDb images locally."""
     if not path:
@@ -584,17 +428,6 @@ def download_image(path, size):
             media.log(repr(e))
             return None
     return target
-
-
-def error(message):
-    # Exit 0: Alfred UI ignores stdout from a script that exits non-zero, which
-    # would leave the window stuck on its skeleton.
-    # The title is one truncating line, so the message goes in the overview.
-    emit({"replace": {"ids": {
-              "poster": poster_view(None),
-              "info": info_view(title_label("Couldn't load details"), " ", message, [])}},
-          "window": {"resize": {"height": "auto"}}})
-    return 0
 
 
 def emit(actions):
