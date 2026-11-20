@@ -28,6 +28,7 @@ ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
 LETTERBOXD_URL = 'https://letterboxd.com/tmdb/'
 SIMKL_URL = 'https://simkl.com/search'
 MOVIECHAT_URL = 'https://moviechat.org/'
+TMDB_URL = 'https://www.themoviedb.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
@@ -158,17 +159,21 @@ def show_item_info(item, media_type):
     title_key = 'title'
     release_date_key = 'release_date'
     if media_type == 'movie':
-        imdb_id = item['imdb_id']
+        imdb_id = item.get('imdb_id')
     elif media_type == 'tv':
-        imdb_id = item['external_ids']['imdb_id']
+        imdb_id = item['external_ids'].get('imdb_id')
         title_key = 'name'
         release_date_key = 'first_air_date'
-    omdb_info = get_omdb_info(imdb_id)
-    log('OMDb info retrieved.')
 
-    if omdb_info['Response'] == 'False':
-        items.append({"title": "Details not found."})
-        return
+    # Titles without an OMDb record (usually no IMDb id) still get a details
+    # list from TMDb data alone: no ratings or credits, but the links work.
+    omdb_info = {}
+    if imdb_id:
+        omdb_info = get_omdb_info(imdb_id)
+        log('OMDb info retrieved.')
+        if omdb_info.get('Response') == 'False':
+            omdb_info = {}
+    imdb_id = get_omdb_value(omdb_info, 'imdbID')
 
     title = item[title_key]
     if item[release_date_key]:
@@ -190,26 +195,38 @@ def show_item_info(item, media_type):
 
     all_search_sites = []
 
-    # IMDb
-    search_url = IMDB_URL + 'title/' + omdb_info['imdbID']
-    all_search_sites.append(search_url)
-    if omdb_info['imdbRating'] != 'N/A':
+    # IMDb, or TMDb when there is no IMDb record
+    if not imdb_id:
+        search_url = TMDB_URL + media_type + '/' + str(item['id'])
+        all_search_sites.append(search_url)
+        items.append({"title": 'TMDb',
+                      "subtitle": f"View '{item[title_key]}' on TMDb",
+                      "valid": True,
+                      "arg": search_url,
+                      "text": {
+                          "copy": str(item['id'])}
+                      })
+    elif get_omdb_value(omdb_info, 'imdbRating'):
+        search_url = IMDB_URL + 'title/' + imdb_id
+        all_search_sites.append(search_url)
         items.append({"title": omdb_info['imdbRating'],
                       "subtitle": 'IMDb (' + omdb_info['imdbVotes'] + " votes)",
                       "icon": {"path": 'img/imdb.png'},
                       "valid": True,
                       "arg": search_url,
                       "text": {
-                          "copy": omdb_info['imdbID']}
+                          "copy": imdb_id}
                       })
     else:
+        search_url = IMDB_URL + 'title/' + imdb_id
+        all_search_sites.append(search_url)
         items.append({"title": 'IMDb',
                       "subtitle": f"Search IMDb for '{item[title_key]}'",
                       "icon": {"path": 'img/imdb.png'},
                       "valid": True,
                       "arg": search_url,
                       "text": {
-                          "copy": omdb_info['imdbID']}
+                          "copy": imdb_id}
                       })
 
     # TheTVDB
@@ -267,7 +284,7 @@ def show_item_info(item, media_type):
     elif media_type == 'tv':
         search_url += '/?category=1'
     all_search_sites.append(search_url)
-    if omdb_info['Metascore'] != 'N/A':
+    if get_omdb_value(omdb_info, 'Metascore'):
         items.append({"title": omdb_info['Metascore'],
                       "subtitle": 'Metacritic',
                       "icon": {"path": 'img/meta.png'},
@@ -302,8 +319,8 @@ def show_item_info(item, media_type):
                       "arg": search_url})
 
     # MovieChat
-    if INCLUDE_MOVIECHAT:
-        search_url = MOVIECHAT_URL + omdb_info['imdbID']
+    if INCLUDE_MOVIECHAT and imdb_id:
+        search_url = MOVIECHAT_URL + imdb_id
         all_search_sites.append(search_url)
         items.append({"title": 'MovieChat',
                       "subtitle": f"View '{item[title_key]}' on MovieChat",
@@ -358,20 +375,14 @@ def show_item_info(item, media_type):
                   "valid": True,
                   "arg": '||'.join(all_search_sites)})
 
-    items.append({"title": omdb_info['Director'],
-                  "subtitle": 'Director',
-                  "icon": {"path": ICON_USER},
-                  "text": {"copy": omdb_info['Director']}})
-
-    items.append({"title": omdb_info['Writer'],
-                  "subtitle": 'Writer',
-                  "icon": {"path": ICON_USER},
-                  "text": {"copy": omdb_info['Writer']}})
-
-    items.append({"title": omdb_info['Actors'],
-                  "subtitle": 'Actors',
-                  "icon": {"path": ICON_GROUP},
-                  "text": {"copy": omdb_info['Actors']}})
+    for key, icon in (('Director', ICON_USER), ('Writer', ICON_USER),
+                      ('Actors', ICON_GROUP)):
+        people = get_omdb_value(omdb_info, key)
+        if people:
+            items.append({"title": people,
+                          "subtitle": key,
+                          "icon": {"path": icon},
+                          "text": {"copy": people}})
 
     generate_item_html(omdb_info, item, media_type)
 
@@ -454,14 +465,15 @@ def generate_item_html(omdb_info, tmdb_info, media_type):
         production_company = tmdb_info['production_companies'][0]['name']
 
     html = item_template.render(
-        title=omdb_info['Title'],
+        title=get_omdb_value(omdb_info, 'Title') or tmdb_info.get('title') or tmdb_info.get('name'),
         backdrop_path=tmdb_info['backdrop_path'],
         poster=tmdb_info['poster_path'],
         production_company=production_company,
         overview=tmdb_info['overview'],
-        release_date=omdb_info['Released'],
-        director=omdb_info['Director'],
-        actors=omdb_info['Actors'],
+        release_date=get_omdb_value(omdb_info, 'Released') or tmdb_info.get(
+            'release_date') or tmdb_info.get('first_air_date') or 'N/A',
+        director=omdb_info.get('Director', 'N/A'),
+        actors=omdb_info.get('Actors', 'N/A'),
         genre=get_subtitle(tmdb_info, omdb_info, media_type)
     )
     with open(HTML_SUMMARY_FILE, "wb") as text_file:
@@ -472,7 +484,7 @@ def generate_item_html(omdb_info, tmdb_info, media_type):
 
 def get_subtitle(tmdb_info, omdb_info, media_type):
     locale = os.environ['locale']
-    certification = omdb_info['Rated']
+    certification = get_omdb_value(omdb_info, 'Rated') or 'N/A'
     if media_type == 'movie' and 'releases' in tmdb_info.keys():
         for release in tmdb_info['releases']['countries']:
             if release['iso_3166_1'] == locale:
@@ -483,12 +495,19 @@ def get_subtitle(tmdb_info, omdb_info, media_type):
             if release['iso_3166_1'] == locale:
                 certification = release['rating']
                 break
+    runtime = get_omdb_value(omdb_info, 'Runtime')
+    if not runtime:
+        minutes = tmdb_info.get('runtime') or next(
+            iter(tmdb_info.get('episode_run_time') or []), None)
+        runtime = f'{minutes} min' if minutes else None
+    genre = get_omdb_value(omdb_info, 'Genre') or ', '.join(
+        g['name'] for g in tmdb_info.get('genres') or [])
     subtitleItems = []
-    if omdb_info['Runtime'] != 'N/A':
-        subtitleItems.append(format_runtime(omdb_info['Runtime']))
-    if omdb_info['Genre'] != 'N/A':
-        subtitleItems.append(omdb_info['Genre'])
-    if certification != 'N/A':
+    if runtime:
+        subtitleItems.append(format_runtime(runtime))
+    if genre:
+        subtitleItems.append(genre)
+    if certification and certification != 'N/A':
         if "rated" not in certification.lower():
             certification = 'Rated ' + certification
         subtitleItems.append(certification)

@@ -35,7 +35,6 @@ import media  # noqa: E402
 import openurls  # noqa: E402
 
 POSTER_URL = 'https://image.tmdb.org/t/p/w342'
-TMDB_URL = 'https://www.themoviedb.org/'
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
 LINK_COL_WIDTH = 250
@@ -46,6 +45,8 @@ OVERVIEW_MAX_CHARS = 550
 CACHE_SECONDS = 600
 CREDIT_NAMES = {'Actors': 'Cast'}
 SITE_NAMES = {'Rotten Tomatoes Audience Score': 'Audience'}
+# SF Symbols for link rows that have no icon file.
+LINK_SYMBOLS = {'TMDb': 'film'}
 
 
 def route(ref):
@@ -86,7 +87,7 @@ def main(ref):
         media.log(repr(e))
         return error('Something went wrong. Please check your internet connection.')
 
-    actions = build(item, media_type, media.items)
+    actions = build(item, media.items)
     write_cache(window_cache(ref), actions)
     emit(actions)
     return 0
@@ -98,18 +99,13 @@ def warm(ref):
     now, so the window opens already filled in."""
     data = read_cache(media.details_cache(ref))
     if data:
-        media_type = 'movie' if ref.startswith('m:') else 'tv'
-        write_cache(window_cache(ref), build(data['item'], media_type, data['rows']))
+        write_cache(window_cache(ref), build(data['item'], data['rows']))
     return 0
 
 
-def build(item, media_type, rows):
+def build(item, rows):
     """JSON actions that fill the window, from a TMDb item and the details
     list rows that media.show_item_info made for it."""
-    if not rows or 'subtitle' not in rows[0]:
-        # No OMDb record (usually no IMDb id): show what TMDb has, unrated.
-        rows = tmdb_rows(item, media_type)
-
     header, rest = rows[0], rows[1:]
     links = [row for row in rest if row.get('arg') and '||' not in row['arg']]
     people = [row for row in rest if not row.get('arg')]
@@ -152,27 +148,6 @@ def write_cache(path, data):
     with open(tmp, 'w') as f:
         json.dump(data, f)
     os.replace(tmp, path)
-
-
-def tmdb_rows(item, media_type):
-    """Header and link rows in show_item_info's shape, from TMDb data alone."""
-    title = item.get('title') or item.get('name') or 'Untitled'
-    year = (item.get('release_date') or item.get('first_air_date') or '')[:4]
-    if year:
-        title += f' ({year})'
-    runtime = item.get('runtime') or next(iter(item.get('episode_run_time') or []), None)
-    subtitle = [media.format_runtime(f'{runtime} min')] if runtime else []
-    subtitle += [', '.join(g['name'] for g in item.get('genres', []))] if item.get('genres') else []
-
-    rows = [{"title": title, "subtitle": ' \u2022 '.join(subtitle)},
-            {"title": 'TMDb', "symbol": 'film',
-             "arg": f"{TMDB_URL}{media_type}/{item['id']}"}]
-    trailer = next((v for v in item.get('videos', {}).get('results', [])
-                    if v.get('type') == 'Trailer' and v.get('site') == 'YouTube'), None)
-    if trailer:
-        rows.append({"title": 'Watch Trailer', "icon": {"path": 'img/youtube.png'},
-                     "arg": media.YOUTUBE_WATCH_URL + trailer['key']})
-    return rows
 
 
 def clip(text, limit):
@@ -256,10 +231,11 @@ def link_cell(index, row):
     the icon is a separate imageview beside it."""
     components = []
     icon = row.get('icon', {}).get('path')
-    if row.get('symbol'):
+    symbol = LINK_SYMBOLS.get(row['title'])
+    if symbol:
         components.append({
             "type": "imageview",
-            "image": {"type": "symbol", "src": row['symbol']},
+            "image": {"type": "symbol", "src": symbol},
             "constraints": {"size": LINK_ICON_SIZE, "position": "centre"},
         })
     elif icon:
