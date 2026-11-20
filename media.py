@@ -32,6 +32,7 @@ TMDB_URL = 'https://www.themoviedb.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
+MAX_SAVED_TITLES = 500
 
 INCLUDE_LETTERBOXD = os.environ.get('include_letterboxd', '0') == "1"
 INCLUDE_SIMKL = os.environ.get('include_simkl', '0') == "1"
@@ -49,6 +50,12 @@ def main(media_type, query):
     api_key = DEFAULT_TMDB_API_KEY
     language = os.environ["search_language"]
     m = re.match('([m|t])\:([0-9]*)', query)
+    # ⇥/↩ on a search result puts its title in Alfred's search field; map it
+    # back to the item the search found.
+    ref = read_titles(media_type).get(normalize('NFC', query).strip())
+    if ref:
+        m = re.match('([m|t])\:([0-9]*)', ref)
+        query = ref
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
             item = get_tmdb_info(m.group(1), m.group(2), api_key, language)
@@ -88,6 +95,7 @@ def main(media_type, query):
             if not results['results']:
                 items.append({"title": "Nothing was found."})
             results['results'].sort(key=extract_popularity, reverse=True)
+            titles = {}
             for item in results['results']:
                 poster = 'https://image.tmdb.org/t/p/w500' + item['poster_path'] if item['poster_path'] else ''
 
@@ -99,14 +107,47 @@ def main(media_type, query):
                     title = item['name']
                     if item.get('first_air_date', 0):
                         title += ' (' + item['first_air_date'][:4] + ')'
+                ref = media_type[:1] + ':' + str(item['id'])
+                titles[title] = None if title in titles else ref
                 items.append({
                     "title": title,
                     "arg": str(item['id']),
                     "quicklookurl": poster,
                     "valid": False,
-                    "autocomplete": media_type[:1] + ':' + str(item['id'])
+                    "autocomplete": ref
                 })
+            # Autocomplete the title rather than the id, unless the search
+            # found two items with the same title and year.
+            for row in items:
+                if titles.get(row['title']):
+                    row['autocomplete'] = row['title']
+            save_titles(media_type, {t: r for t, r in titles.items() if r})
     output_items()
+
+
+def titles_cache(media_type):
+    return os.path.join(CACHEDIR, 'titles-' + media_type + '.json')
+
+
+def read_titles(media_type):
+    try:
+        with open(titles_cache(media_type)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_titles(media_type, titles):
+    """Remember which item each autocompleted title stands for. Keep earlier
+    searches' titles too (newest last, capped), so a title still resolves
+    after searching for something else and coming back."""
+    saved = {t: r for t, r in read_titles(media_type).items() if t not in titles}
+    saved.update(titles)
+    saved = dict(list(saved.items())[-MAX_SAVED_TITLES:])
+    tmp = titles_cache(media_type) + '.tmp'
+    with open(tmp, 'w') as f:
+        json.dump(saved, f)
+    os.replace(tmp, titles_cache(media_type))
 
 
 def details_cache(ref):
