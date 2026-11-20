@@ -32,6 +32,19 @@
 					<false/>
 				</dict>
 			</array>
+			<key>5E8B3C2D-71A4-4F9E-B6D0-2C9A8E4F1B37</key>
+			<array>
+				<dict>
+					<key>destinationuid</key>
+					<string>A4C2E1F7-3B9D-4E6A-8F15-C7D2B9E04A61</string>
+					<key>modifiers</key>
+					<integer>0</integer>
+					<key>modifiersubtext</key>
+					<string></string>
+					<key>vitoclose</key>
+					<false/>
+				</dict>
+			</array>
 			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 			<array>
 				<dict>
@@ -375,6 +388,21 @@
 				<key>version</key>
 				<integer>1</integer>
 			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>availableviaurlhandler</key>
+					<false/>
+					<key>triggerid</key>
+					<string>trailer</string>
+				</dict>
+				<key>type</key>
+				<string>alfred.workflow.trigger.external</string>
+				<key>uid</key>
+				<string>5E8B3C2D-71A4-4F9E-B6D0-2C9A8E4F1B37</string>
+				<key>version</key>
+				<integer>1</integer>
+			</dict>
 		</array>
 		<key>readme</key>
 		<string>Run the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`) to search for movies and TV shows, respectively. Press ↩ to get details and ratings.
@@ -396,6 +424,15 @@
 				<real>260</real>
 				<key>ypos</key>
 				<real>300</real>
+			</dict>
+			<key>5E8B3C2D-71A4-4F9E-B6D0-2C9A8E4F1B37</key>
+			<dict>
+				<key>note</key>
+				<string>Trailer button in the details window: a finish action from a button doesn't reach the connected trailer window, so load.py --open-trailer calls this.</string>
+				<key>xpos</key>
+				<real>860</real>
+				<key>ypos</key>
+				<real>415</real>
 			</dict>
 			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 			<dict>

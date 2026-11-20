@@ -18,6 +18,7 @@ arg arrives here and decides what happens:
 """
 import json
 import os
+import plistlib
 import re
 import struct
 import subprocess
@@ -56,6 +57,7 @@ TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
 # Fallback when the local player server can't start: YouTube's own page.
 TRAILER_FALLBACK_URL = 'https://m.youtube.com/watch?v={key}'
 VIDEO_ID = re.compile(r'^[A-Za-z0-9_-]{6,20}$')
+TRAILER_TRIGGER_DELAY = 0.8
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
@@ -307,7 +309,11 @@ def link_action(url):
     """Open a link in the browser, except YouTube trailers, which play in a
     separate trailer window that can go full screen."""
     if url.startswith(media.YOUTUBE_WATCH_URL):
-        return {"type": "json", "src": play_trailer(url)}
+        # A finish action from a click doesn't reach the connected trailer
+        # window (only one sent before this window shows does), so a script
+        # starts it through the workflow's "trailer" External Trigger.
+        key = url[len(media.YOUTUBE_WATCH_URL):]
+        return {"type": "script", "src": "./scripts/load.py", "args": [key, "--open-trailer"]}
     return {"type": "json", "src": {"open": {"type": "url", "src": url}}}
 
 
@@ -316,6 +322,26 @@ def play_trailer(url):
     after it: an Alfred UI can't go full screen inside Alfred, and Alfred's
     web view can't take the YouTube player full screen itself."""
     return {"finish": {"args": url[len(media.YOUTUBE_WATCH_URL):]}}
+
+
+def open_trailer(key):
+    """Trailer button in the details window. A finish action with args sent
+    after this window shows doesn't reach the connected trailer window, so
+    start it through the workflow's "trailer" External Trigger instead. This
+    window's own (empty) finish also starts the trailer window, which closes
+    straight away without an id; trigger once that's gone, or Alfred drops
+    the second launch."""
+    if VIDEO_ID.match(key or ''):
+        with open(os.path.join(WORKFLOW_DIR, 'info.plist'), 'rb') as f:
+            bundle = plistlib.load(f)['bundleid']
+        script = (f'tell application id "com.runningwithcrayons.Alfred" to run trigger "trailer" '
+                  f'in workflow "{bundle}" with argument "{key}"')
+        subprocess.Popen(['/bin/sh', '-c', f'sleep {TRAILER_TRIGGER_DELAY}; exec /usr/bin/osascript -e "$1"',
+                          'sh', script],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    emit({"finish": {}})
+    return 0
 
 
 def player_check(key):
@@ -498,5 +524,6 @@ def emit(actions):
 if __name__ == '__main__':
     ref = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('item')
     mode = sys.argv[2] if len(sys.argv) > 2 else ''
-    modes = {'--route': route, '--warm': warm, '--player-check': player_check, '--player': player}
+    modes = {'--route': route, '--warm': warm, '--open-trailer': open_trailer,
+             '--player-check': player_check, '--player': player}
     sys.exit(modes.get(mode, main)(ref))
