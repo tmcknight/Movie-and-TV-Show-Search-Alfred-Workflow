@@ -271,7 +271,11 @@ def show_item_info(item, media_type):
                   "arg": media_type[:1] + ':' + str(item['id']),
                   "quicklookurl": pathlib.Path(HTML_SUMMARY_FILE).as_uri(),
                   "text": {
-                      "copy": str(item['id'])}
+                      "copy": str(item['id'])},
+                  # The same small poster as the search result (usually
+                  # cached by then), or the blank poster shape.
+                  "icon": {"path": result_posters([item]).get(item['id']) or NO_POSTER_ICON,
+                           "resize": "fit"}
                   })
 
     search = urllib.parse.quote(item[title_key].encode(
