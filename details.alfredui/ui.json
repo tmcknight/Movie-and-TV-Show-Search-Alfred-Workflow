@@ -32,6 +32,10 @@
     "include_justwatch": {
       "src": "variable",
       "scriptenv": true
+    },
+    "trailers_in_alfred": {
+      "src": "variable",
+      "scriptenv": true
     }
   },
   "window": {

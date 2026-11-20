@@ -58,6 +58,8 @@ TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
 TRAILER_FALLBACK_URL = 'https://m.youtube.com/watch?v={key}'
 VIDEO_ID = re.compile(r'^[A-Za-z0-9_-]{6,20}$')
 TRAILER_TRIGGER_DELAY = 0.8
+# Workflow setting: play trailers in the trailer window instead of on YouTube.
+TRAILERS_IN_ALFRED = os.environ.get('trailers_in_alfred', '0') == '1'
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
@@ -75,7 +77,7 @@ LINK_SYMBOLS = {'TMDb': 'film'}
 
 def route(ref):
     ref = ref or ''
-    if ref.startswith(media.YOUTUBE_WATCH_URL) and '||' not in ref:
+    if TRAILERS_IN_ALFRED and ref.startswith(media.YOUTUBE_WATCH_URL) and '||' not in ref:
         # The details list's Watch Trailer row: hand the video to the trailer
         # window (connected after this UI) instead of opening the browser.
         emit(play_trailer(ref))
@@ -169,7 +171,9 @@ def build(item, rows):
 
 
 def window_cache(ref):
-    return os.path.join(media.CACHEDIR, 'window-' + (ref or '').replace(':', '-') + '.json')
+    # The trailer button depends on the trailer setting, so cache per setting.
+    suffix = '-trailers' if TRAILERS_IN_ALFRED else ''
+    return os.path.join(media.CACHEDIR, 'window-' + (ref or '').replace(':', '-') + suffix + '.json')
 
 
 def read_cache(path):
@@ -306,9 +310,9 @@ def link_cell(index, row):
 
 
 def link_action(url):
-    """Open a link in the browser, except YouTube trailers, which play in a
-    separate trailer window that can go full screen."""
-    if url.startswith(media.YOUTUBE_WATCH_URL):
+    """Open a link in the browser, except YouTube trailers when the workflow
+    is set to play them in the trailer window."""
+    if TRAILERS_IN_ALFRED and url.startswith(media.YOUTUBE_WATCH_URL):
         # A finish action from a click doesn't reach the connected trailer
         # window (only one sent before this window shows does), so a script
         # starts it through the workflow's "trailer" External Trigger.

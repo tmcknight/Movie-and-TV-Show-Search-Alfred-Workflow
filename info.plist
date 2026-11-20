@@ -667,6 +667,25 @@
 				<key>variable</key>
 				<string>include_justwatch</string>
 			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>default</key>
+					<false/>
+					<key>required</key>
+					<false/>
+					<key>text</key>
+					<string>Play trailers in Alfred</string>
+				</dict>
+				<key>description</key>
+				<string>Open trailers in their own player window instead of on YouTube in your browser.</string>
+				<key>label</key>
+				<string>Trailers</string>
+				<key>type</key>
+				<string>checkbox</string>
+				<key>variable</key>
+				<string>trailers_in_alfred</string>
+			</dict>
 		</array>
 		<key>version</key>
 		<string>2.23.0</string>
