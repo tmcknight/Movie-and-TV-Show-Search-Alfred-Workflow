@@ -11,6 +11,7 @@ import urllib.request
 import re
 import json
 import subprocess
+import time
 from concurrent.futures import ThreadPoolExecutor
 from mako.template import Template
 from unicodedata import normalize
@@ -39,6 +40,10 @@ MAX_SAVED_TITLES = 500
 RESULT_POSTER_SIZE = 'w92'
 RESULT_POSTER_TIMEOUT = 3
 NO_POSTER_ICON = 'img/no-poster.png'
+# Search result subtitles: rating · genres · director (movies) or seasons
+# (TV). Genres and those extras are fetched in parallel and cached.
+RESULT_DETAIL_TIMEOUT = 3
+META_MAX_AGE = {'genres': 30 * 86400, 'movie': 90 * 86400, 'tv': 7 * 86400}
 
 INCLUDE_LETTERBOXD = os.environ.get('include_letterboxd', '0') == "1"
 INCLUDE_SIMKL = os.environ.get('include_simkl', '0') == "1"
@@ -103,7 +108,11 @@ def main(media_type, query):
             results['results'].sort(key=extract_popularity, reverse=True)
             titles = {}
             seen = {}
-            posters = result_posters(results['results'])
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                posters = pool.submit(result_posters, results['results'])
+                extras = pool.submit(result_extras, media_type, results['results'],
+                                     api_key, language)
+                posters, extras = posters.result(), extras.result()
             for item in results['results']:
                 poster = 'https://image.tmdb.org/t/p/w500' + item['poster_path'] if item['poster_path'] else ''
 
@@ -123,6 +132,7 @@ def main(media_type, query):
                 titles[title] = media_type[:1] + ':' + str(item['id'])
                 items.append({
                     "title": title,
+                    "subtitle": extras.get(item['id'], ''),
                     "arg": str(item['id']),
                     "quicklookurl": poster,
                     "valid": False,
@@ -134,6 +144,78 @@ def main(media_type, query):
                                      "resize": "fit"}
             save_titles(media_type, titles)
     output_items()
+
+
+def result_extras(media_type, results, api_key, language):
+    """Subtitles for search results, by TMDb id, e.g.
+    "★ 8.0 · Drama, Crime · Robert Rossen" or "★ 7.8 · Drama · 2 seasons"."""
+    genres = genre_names(media_type, api_key, language)
+
+    def extra(result):
+        if media_type == 'movie':
+            crew = cached_json(f"movie-{result['id']}-directors", META_MAX_AGE['movie'],
+                               lambda: {"directors": [
+                                   person['name'] for person in fetch_json(
+                                       f"{TMDB_API_URL}movie/{result['id']}/credits",
+                                       {"api_key": api_key}).get('crew', [])
+                                   if person.get('job') == 'Director']})
+            return ', '.join((crew or {}).get('directors', [])[:2])
+        show = cached_json(f"tv-{result['id']}-seasons", META_MAX_AGE['tv'],
+                           lambda: {"seasons": fetch_json(
+                               f"{TMDB_API_URL}tv/{result['id']}",
+                               {"api_key": api_key}).get('number_of_seasons')})
+        seasons = (show or {}).get('seasons')
+        if not seasons:
+            return ''
+        return f"{seasons} season" + ('' if seasons == 1 else 's')
+
+    def subtitle(result):
+        parts = []
+        if result.get('vote_count'):
+            parts.append(f"★ {result.get('vote_average', 0):.1f}")
+        names = [genres[g] for g in result.get('genre_ids', []) if g in genres][:2]
+        if names:
+            parts.append(', '.join(names))
+        parts.append(extra(result))
+        return result['id'], ' · '.join(part for part in parts if part)
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        return dict(pool.map(subtitle, results))
+
+
+def genre_names(media_type, api_key, language):
+    data = cached_json(f"genres-{media_type}-{language}", META_MAX_AGE['genres'],
+                       lambda: fetch_json(f"{TMDB_API_URL}genre/{media_type}/list",
+                                          {"api_key": api_key, "language": language}))
+    return {genre['id']: genre['name'] for genre in (data or {}).get('genres', [])}
+
+
+def cached_json(name, max_age, fetch):
+    """fetch()'s result, kept in the cache for max_age seconds; None if it
+    fails and nothing is cached."""
+    path = os.path.join(CACHEDIR, 'meta', name + '.json')
+    try:
+        if time.time() - os.path.getmtime(path) < max_age:
+            with open(path) as f:
+                return json.load(f)
+    except (OSError, ValueError):
+        pass
+    try:
+        data = fetch()
+    except Exception as e:
+        log(repr(e))
+        return None
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + '.tmp', 'w') as f:
+        json.dump(data, f)
+    os.replace(path + '.tmp', path)
+    return data
+
+
+def fetch_json(url, params):
+    with urllib.request.urlopen(f"{url}?{urllib.parse.urlencode(params)}",
+                                timeout=RESULT_DETAIL_TIMEOUT) as r:
+        return json.load(r)
 
 
 def result_posters(results):
