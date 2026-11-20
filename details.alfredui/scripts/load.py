@@ -289,7 +289,10 @@ def download_poster(item):
 def error(message):
     # Exit 0: Alfred UI ignores stdout from a script that exits non-zero, which
     # would leave the window stuck on "Loading…".
-    emit({"update": {"ids": {"title": {"text": message}}}})
+    # The title is one truncating line, so the message goes in the overview.
+    emit({"update": {"ids": {"title": {"text": "Couldn't load details"},
+                             "overview": {"text": message}}, "relayout": True},
+          "window": {"resize": {"height": "auto"}}})
     return 0
 
 
