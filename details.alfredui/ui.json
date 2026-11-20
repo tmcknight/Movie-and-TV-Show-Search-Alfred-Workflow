@@ -72,7 +72,12 @@
           "type": "imageview",
           "id": "backdrop",
           "resize": "fill",
-          "image": null
+          "image": null,
+          "constraints": {
+            "insets": {
+              "left": 200
+            }
+          }
         },
         {
           "type": "view",

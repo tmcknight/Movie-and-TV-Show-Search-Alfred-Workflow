@@ -19,11 +19,13 @@ arg arrives here and decides what happens:
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
+import zlib
 
 WORKFLOW_DIR = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
@@ -43,6 +45,8 @@ BACKDROP_SIZE = 'w300'
 # Alfred UI has no blur or text shadow. Shrinking the backdrop this far and
 # letting the imageview scale it up blurs it, so no detail fights the text.
 BACKDROP_BLUR_WIDTH = 120
+# The backdrop sits right of the poster and fades in over its left third.
+BACKDROP_FADE = 0.35
 LOGO_SIZE = 'w500'
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
@@ -314,20 +318,70 @@ def title_logo(item, title):
 
 
 def blurred(path):
-    """A tiny copy of the image at path (made with macOS's sips), or path
-    itself if that fails."""
+    """A tiny copy of the image at path whose left edge fades out, or path
+    itself if that fails. The imageview scales it up, which blurs it; Alfred
+    UI draws no gradients, so the fade is baked into the image's alpha."""
     if not path:
         return None
-    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}.png'
+    target = path[:-4] + f'-blur{BACKDROP_BLUR_WIDTH}-fade.png'
     if not os.path.exists(target):
+        bmp = target[:-4] + '.bmp'
         try:
-            subprocess.run(['/usr/bin/sips', '-s', 'format', 'png',
-                            '--resampleWidth', str(BACKDROP_BLUR_WIDTH), path, '--out', target],
+            subprocess.run(['/usr/bin/sips', '-s', 'format', 'bmp',
+                            '--resampleWidth', str(BACKDROP_BLUR_WIDTH), path, '--out', bmp],
                            check=True, capture_output=True, timeout=5)
-        except (OSError, subprocess.SubprocessError) as e:
+            with open(bmp, 'rb') as f:
+                width, height, rows = read_bmp(f.read())
+            with open(target, 'wb') as f:
+                f.write(png_with_fade(width, height, rows))
+        except (OSError, ValueError, subprocess.SubprocessError) as e:
             media.log(repr(e))
             return path
+        finally:
+            if os.path.exists(bmp):
+                os.remove(bmp)
     return target
+
+
+def read_bmp(data):
+    """Pixel rows of an uncompressed 24/32-bit BMP (what sips writes), top
+    row first, as lists of (r, g, b)."""
+    if data[:2] != b'BM':
+        raise ValueError('not a BMP')
+    offset, = struct.unpack_from('<I', data, 10)
+    width, height, _, bpp, compression = struct.unpack_from('<iiHHI', data, 18)
+    if bpp not in (24, 32) or compression not in (0, 3):
+        raise ValueError(f'unsupported BMP: {bpp} bpp, compression {compression}')
+    step = bpp // 8
+    stride = (width * step + 3) & ~3
+    rows = []
+    for y in range(abs(height)):
+        start = offset + y * stride
+        rows.append([(data[i + 2], data[i + 1], data[i])
+                     for i in range(start, start + width * step, step)])
+    if height > 0:  # stored bottom-up
+        rows.reverse()
+    return width, abs(height), rows
+
+
+def png_with_fade(width, height, rows):
+    """An RGBA PNG of rows whose alpha rises smoothly from 0 at the left edge
+    to opaque BACKDROP_FADE of the way across."""
+    fade = max(1, round(width * BACKDROP_FADE))
+    alphas = []
+    for x in range(width):
+        t = min(1.0, x / fade)
+        alphas.append(round(255 * t * t * (3 - 2 * t)))  # smoothstep
+    raw = b''.join(b'\x00' + bytes(v for (r, g, b), a in zip(row, alphas) for v in (r, g, b, a))
+                   for row in rows)
+
+    def chunk(kind, body):
+        return (struct.pack('>I', len(body)) + kind + body
+                + struct.pack('>I', zlib.crc32(kind + body)))
+    return (b'\x89PNG\r\n\x1a\n'
+            + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0))
+            + chunk(b'IDAT', zlib.compress(raw, 9))
+            + chunk(b'IEND', b''))
 
 
 def download_image(path, size):
