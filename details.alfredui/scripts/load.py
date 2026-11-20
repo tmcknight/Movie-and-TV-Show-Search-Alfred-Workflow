@@ -44,8 +44,8 @@ import openurls  # noqa: E402
 
 IMAGE_URL = 'https://image.tmdb.org/t/p/'
 POSTER_SIZE = 'w342'
-# The page blurs the backdrop, so the smallest size is plenty.
-BACKDROP_SIZE = 'w300'
+# The page only lightly blurs the backdrop, so it needs some detail.
+BACKDROP_SIZE = 'w780'
 LOGO_SIZE = 'w500'
 TRAILER_PORT = 47826
 TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
@@ -65,6 +65,7 @@ FILM_ICON = ('<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-
              '<path d="M4.5 2.5v11M11.5 2.5v11M1.5 6h3M1.5 10h3M11.5 6h3M11.5 10h3"/></svg>')
 # Link rows that have no icon file.
 LINK_SVGS = {'TMDb': FILM_ICON}
+PLAY_ICON = '<svg viewBox="0 0 10 12"><path d="M0 0v12l10-6z" fill="currentColor"/></svg>'
 
 
 def route(ref):
@@ -185,12 +186,14 @@ def skeleton_page():
         pass
     bone = '<div class="bone" style="width: {}; height: {}px"></div>'.format
     lines = ''.join(bone(w, 13) for w in ('100%', '96%', '100%', '62%'))
-    links = ''.join(bone('60%', 14) for _ in range(6))
+    tiles = ''.join(bone(f'{w}px', 40) for w in (118, 84, 84))
+    pills = ''.join(bone(f'{w}px', 26) for w in (124, 92, 78, 104))
     body = ('<div class="poster"></div><div class="info">'
             f'<div class="heading" style="gap: 8px">{bone("55%", 26)}{bone("40%", 14)}</div>'
             f'<div class="heading" style="gap: 7px">{lines}</div>'
             f'<div class="heading" style="gap: 8px; margin-top: 6px">{bone("30%", 14)}{bone("48%", 14)}</div>'
-            f'<div class="links">{links}</div></div>')
+            f'<div class="links"><div class="ratings">{tiles}</div>'
+            f'<div class="sites">{pills}</div></div></div>')
     return write_page('skeleton', 'skeleton', body)
 
 
@@ -213,31 +216,66 @@ def credits_html(people):
 
 
 def links_html(links):
-    """Two columns of links, filled down the first column, then the second."""
+    """Ratings as tiles, then the trailer and the other sites as pills. ⌘N
+    follows the order on screen."""
     if not links:
         return ''
-    cells = [link_html(i, row) for i, row in enumerate(links)]
-    # Keep the links in order in the page (⌘N follows it) and let the grid
-    # flow them down the columns.
-    rows = -(-len(cells) // 2)
-    return (f'<nav class="links" style="grid-template-rows: repeat({rows}, auto)">'
-            f'{"".join(cells)}</nav>')
+    ratings = [row for row in links if row['title'][:1].isdigit()]
+    trailers = [row for row in links if row['arg'].startswith(media.YOUTUBE_WATCH_URL)]
+    sites = [row for row in links if row not in ratings and row not in trailers]
+    keys = iter(range(1, 100))
+    rating_tiles = ''.join(rating_html(row, next(keys)) for row in ratings)
+    pills = ''.join(pill_html(row, next(keys), primary=True) for row in trailers)
+    pills += ''.join(pill_html(row, next(keys)) for row in sites)
+    return ('<nav class="links">'
+            + (f'<div class="ratings">{rating_tiles}</div>' if rating_tiles else '')
+            + (f'<div class="sites">{pills}</div>' if pills else '')
+            + '</nav>')
 
 
-def link_html(index, row):
-    url = row['arg']
-    title = row['title']
-    icon = LINK_SVGS.get(title)
+def rating_html(row, key):
+    """A tile: icon, score, and the site with any vote count under it."""
+    site, _, details = row.get('subtitle', '').partition(' (')
+    site = SITE_NAMES.get(site, site)
+    votes = re.match(r'([\d,]+) votes', details)
+    if votes:
+        site += f" · {compact(int(votes.group(1).replace(',', '')))}"
+    score = esc(row['title'])
+    if site.startswith('Metacritic') and row['title'].isdigit():
+        value = int(row['title'])
+        tone = 'good' if value >= 61 else 'mixed' if value >= 40 else 'bad'
+        score = f'<span class="metascore {tone}">{score}</span>'
+    return link_tag(row, key, 'rating',
+                    f'{link_icon(row)}<span class="score">{score}</span>'
+                    f'<span class="source">{esc(site)}</span>')
+
+
+def pill_html(row, key, primary=False):
+    if primary:
+        icon = PLAY_ICON
+        label = 'Watch Trailer'
+    else:
+        icon = link_icon(row)
+        label = esc(link_text(row)).replace('  ·  ', ' <span class="dot">·</span> ')
+    return link_tag(row, key, 'pill primary' if primary else 'pill', f'{icon}<span>{label}</span>')
+
+
+def link_icon(row):
+    icon = LINK_SVGS.get(row['title'])
     if not icon and row.get('icon', {}).get('path'):
         icon = f'<img src="{data_uri(os.path.join(WORKFLOW_DIR, row["icon"]["path"]))}" alt="">'
-    label = esc(link_text(row)).replace('  ·  ', ' <span class="dot">·</span> ')
-    key = f'<span class="key">⌘{index + 1}</span>' if index < 9 else ''
+    return icon or ''
+
+
+def link_tag(row, key, css_class, content):
+    url = row['arg']
+    hint = f'<span class="key">⌘{key}</span>' if key <= 9 else ''
     if TRAILERS_IN_ALFRED and url.startswith(media.YOUTUBE_WATCH_URL):
         # Opens the trailer window through page_event.zsh instead.
         target = f'href="#" data-hash="trailer={esc(url[len(media.YOUTUBE_WATCH_URL):])}"'
     else:
         target = f'href="{esc(url)}"'
-    return f'<a {target} title="{esc(url)}">{icon or ""}<span class="label">{label}</span>{key}</a>'
+    return f'<a class="{css_class}" {target} title="{esc(url)}">{content}{hint}</a>'
 
 
 def esc(text):
