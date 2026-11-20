@@ -36,12 +36,13 @@
   },
   "window": {
     "title": "Movie and TV Show Details",
-    "padding": 20,
+    "padding": 0,
     "root": {
       "type": "view",
       "id": "root",
-      "layout": "border",
-      "spacing": 20,
+      "layout": "stack",
+      "cliptobounds": true,
+      "appearance": "dark",
       "events": [
         {
           "triggers": "preload",
@@ -69,111 +70,145 @@
       "components": [
         {
           "type": "imageview",
-          "id": "poster",
-          "resize": "fit",
-          "cornerradius": 8,
-          "image": {
-            "type": "symbol",
-            "src": "film"
-          },
-          "constraints": {
-            "region": "left",
-            "position": "top",
-            "size": {
-              "width": 180,
-              "height": 270
-            }
-          }
+          "id": "backdrop",
+          "resize": "fill",
+          "image": null
         },
         {
           "type": "view",
-          "id": "info",
-          "layout": "inline",
-          "spacing": 12,
-          "constraints": {
-            "region": "centre",
-            "position": "top"
-          },
+          "id": "scrim",
+          "layout": "stack",
+          "background": "#000000b3",
           "components": [
             {
+              "type": "label",
+              "text": " "
+            }
+          ]
+        },
+        {
+          "type": "view",
+          "id": "content",
+          "layout": "border",
+          "spacing": 20,
+          "components": [
+            {
+              "type": "imageview",
+              "id": "poster",
+              "resize": "fit",
+              "cornerradius": 8,
+              "image": {
+                "type": "symbol",
+                "src": "film"
+              },
+              "constraints": {
+                "region": "left",
+                "position": "top",
+                "size": {
+                  "width": 180,
+                  "height": 270
+                }
+              }
+            },
+            {
               "type": "view",
+              "id": "info",
               "layout": "inline",
-              "direction": "vertical",
-              "spacing": 4,
+              "spacing": 12,
+              "constraints": {
+                "region": "centre",
+                "position": "top"
+              },
               "components": [
                 {
+                  "type": "view",
+                  "layout": "inline",
+                  "direction": "vertical",
+                  "spacing": 4,
+                  "components": [
+                    {
+                      "type": "label",
+                      "id": "title",
+                      "text": "Loading…",
+                      "linebreak": "truncatetail",
+                      "selectable": true,
+                      "font": {
+                        "size": "large",
+                        "weight": "bold"
+                      }
+                    },
+                    {
+                      "type": "label",
+                      "id": "subtitle",
+                      "text": " ",
+                      "linebreak": "truncatetail",
+                      "colour": "secondaryLabelColor"
+                    }
+                  ]
+                },
+                {
                   "type": "label",
-                  "id": "title",
-                  "text": "Loading…",
-                  "linebreak": "truncatetail",
+                  "id": "overview",
+                  "text": "",
+                  "linebreak": "wordwrap",
                   "selectable": true,
-                  "font": {
-                    "size": "large",
-                    "weight": "bold"
+                  "constraints": {
+                    "size": {
+                      "width": 460
+                    }
                   }
                 },
                 {
-                  "type": "label",
-                  "id": "subtitle",
-                  "text": " ",
-                  "linebreak": "truncatetail",
-                  "colour": "secondaryLabelColor"
-                }
-              ]
-            },
-            {
-              "type": "label",
-              "id": "overview",
-              "text": "",
-              "linebreak": "wordwrap",
-              "selectable": true,
-              "constraints": {
-                "size": {
-                  "width": 460
-                }
-              }
-            },
-            {
-              "type": "view",
-              "layout": "inline",
-              "direction": "vertical",
-              "spacing": 14,
-              "components": [
-                {
                   "type": "view",
-                  "id": "credits",
                   "layout": "inline",
+                  "direction": "vertical",
+                  "spacing": 14,
                   "components": [
                     {
-                      "type": "label",
-                      "text": " "
-                    }
-                  ],
-                  "direction": "vertical",
-                  "spacing": 4
-                },
-                {
-                  "type": "view",
-                  "id": "links",
-                  "layout": "inline",
-                  "components": [
+                      "type": "view",
+                      "id": "credits",
+                      "layout": "inline",
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "direction": "vertical",
+                      "spacing": 4
+                    },
                     {
-                      "type": "label",
-                      "text": " "
+                      "type": "view",
+                      "id": "links",
+                      "layout": "inline",
+                      "components": [
+                        {
+                          "type": "label",
+                          "text": " "
+                        }
+                      ],
+                      "direction": "vertical",
+                      "spacing": 2
                     }
                   ],
-                  "direction": "vertical",
-                  "spacing": 2
+                  "constraints": {
+                    "insets": {
+                      "top": 6
+                    }
+                  }
                 }
               ],
-              "constraints": {
-                "insets": {
-                  "top": 6
-                }
-              }
+              "direction": "vertical"
             }
           ],
-          "direction": "vertical"
+          "constraints": {
+            "insets": {
+              "top": 20,
+              "right": 20,
+              "bottom": 20,
+              "left": 20
+            }
+          }
         }
       ]
     },

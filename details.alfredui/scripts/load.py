@@ -34,7 +34,13 @@ sys.path.insert(0, WORKFLOW_DIR)
 import media  # noqa: E402
 import openurls  # noqa: E402
 
-POSTER_URL = 'https://image.tmdb.org/t/p/w342'
+IMAGE_URL = 'https://image.tmdb.org/t/p/'
+POSTER_SIZE = 'w342'
+# The backdrop sits dimmed behind a scrim, so the smallest size is plenty, and
+# a small image can't push the window taller when it resizes to fit.
+BACKDROP_SIZE = 'w300'
+LOGO_SIZE = 'w500'
+LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
 LINK_COL_WIDTH = 250
@@ -116,16 +122,24 @@ def build(item, rows):
         "overview": {"text": clip(item.get('overview') or 'No overview available.',
                                   OVERVIEW_MAX_CHARS)},
     }
-    poster = download_poster(item)
+    poster = download_image(item.get('poster_path'), POSTER_SIZE)
     if poster:
         update["poster"] = {"image": {"type": "file", "src": poster}}
+    backdrop = download_image(item.get('backdrop_path'), BACKDROP_SIZE)
+    if backdrop:
+        update["backdrop"] = {"image": {"type": "file", "src": backdrop}}
+
+    replace = {
+        "credits": credits_form(people),
+        "links": links_grid(links),
+    }
+    logo = title_logo(item, header['title'])
+    if logo:
+        replace["title"] = logo
 
     return {
         "update": {"ids": update, "relayout": True},
-        "replace": {"ids": {
-            "credits": credits_form(people),
-            "links": links_grid(links),
-        }},
+        "replace": {"ids": replace},
         # Processed after update/replace: fit the window's height to them.
         "window": {"resize": {"height": "auto"}},
     }
@@ -271,15 +285,38 @@ def link_cell(index, row):
     return view
 
 
-def download_poster(item):
-    """Alfred UI images load from files only, so cache the poster locally."""
-    path = item.get('poster_path')
+def title_logo(item, title):
+    """The title as the film's clear logo (the transparent PNGs Plex shows),
+    sized to the logo's own aspect ratio: an imageview centres an image that
+    doesn't fill it, which would push the logo off the left edge."""
+    logos = [logo for logo in item.get('images', {}).get('logos', [])
+             if logo.get('file_path', '').endswith('.png') and logo.get('aspect_ratio')]
+    if not logos:
+        return None
+    # TMDb lists the search language, English and language-less logos mixed;
+    # take the first in that order of preference.
+    language = os.environ.get('search_language', 'en')
+    rank = {language: 0, 'en': 1, None: 2}
+    logo = min(logos, key=lambda logo: rank.get(logo.get('iso_639_1'), 3))
+    path = download_image(logo['file_path'], LOGO_SIZE)
     if not path:
         return None
-    target = os.path.join(media.CACHEDIR, 'poster' + path.replace('/', '-'))
+    ratio = logo['aspect_ratio']
+    height = min(LOGO_MAX['height'], LOGO_MAX['width'] / ratio)
+    return {"type": "imageview", "id": "title", "resize": "fit", "tooltip": title,
+            "image": {"type": "file", "src": path},
+            "constraints": {"position": "left",
+                            "size": {"width": round(height * ratio), "height": round(height)}}}
+
+
+def download_image(path, size):
+    """Alfred UI images load from files only, so cache TMDb images locally."""
+    if not path:
+        return None
+    target = os.path.join(media.CACHEDIR, size + path.replace('/', '-'))
     if not os.path.exists(target):
         try:
-            urllib.request.urlretrieve(POSTER_URL + path, target)
+            urllib.request.urlretrieve(IMAGE_URL + size + path, target)
         except Exception as e:
             media.log(repr(e))
             return None

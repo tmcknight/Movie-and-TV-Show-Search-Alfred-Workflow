@@ -185,7 +185,11 @@ def get_tmdb_info(item_type, item_id, api_key, language):
     elif item_type == 't':
         url += 'tv/' + item_id
     params = dict(
-        api_key=api_key, language=language, append_to_response='videos,external_ids,watch/providers,releases,content_ratings')
+        api_key=api_key, language=language,
+        append_to_response='videos,external_ids,watch/providers,releases,content_ratings,images',
+        # Logos for the details window: the search language, then English,
+        # then language-less ones.
+        include_image_language=f'{language},en,null')
 
     return get_json(url, params)
 
