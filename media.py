@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function
 import os
 import sys
 import argparse
+import pathlib
 import urllib
 import urllib.parse
 import urllib.request
@@ -49,12 +50,12 @@ def main(media_type, query):
 
     api_key = DEFAULT_TMDB_API_KEY
     language = os.environ["search_language"]
-    m = re.match('([m|t])\:([0-9]*)', query)
+    m = re.match(r'([m|t]):([0-9]*)', query)
     # ⇥/↩ on a search result puts its title in Alfred's search field; map it
     # back to the item the search found.
     ref = read_titles(media_type).get(normalize('NFC', query).strip())
     if ref:
-        m = re.match('([m|t])\:([0-9]*)', ref)
+        m = re.match(r'([m|t]):([0-9]*)', ref)
         query = ref
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
@@ -226,7 +227,7 @@ def show_item_info(item, media_type):
                   # ↩ opens the Alfred 6 details window; every other row's arg
                   # is a URL, which the window's script opens instead.
                   "arg": media_type[:1] + ':' + str(item['id']),
-                  "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE),
+                  "quicklookurl": pathlib.Path(HTML_SUMMARY_FILE).as_uri(),
                   "text": {
                       "copy": str(item['id'])}
                   })
