@@ -179,6 +179,12 @@ def links_grid(links):
     cells = [link_cell(i, row) for i, row in enumerate(links)]
     half = -(-len(cells) // 2)
     columns = [cells[:half], cells[half:]]
+    if len(columns[1]) < len(columns[0]):
+        # The row centres a shorter column vertically; pad it to keep the
+        # two columns' rows level.
+        spacer = hrow([BLANK_LABEL])
+        spacer["constraints"] = {"position": "left", "size": {"height": LINK_ROW_HEIGHT}}
+        columns[1].append(spacer)
     return {"type": "view", "id": "links", "layout": "inline", "direction": "horizontal",
             "spacing": LINK_GAP, "constraints": {"position": "left"},
             "components": [{"type": "view", "layout": "inline", "direction": "vertical",
