@@ -51,6 +51,8 @@ BACKDROP_BLUR_WIDTH = 120
 BACKDROP_FADE = 0.35
 BACKDROP_FADE_EDGE = 0.1
 LOGO_SIZE = 'w500'
+TRAILER_EMBED_URL = 'https://m.youtube.com/watch?v={key}'
+TRAILER_SIZE = {"width": 560, "height": 315}
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
@@ -285,7 +287,7 @@ def link_cell(index, row):
         "tooltip": row['arg'] + (f"  (⌘{index + 1})" if index < 9 else ''),
         "events": [{
             "triggers": "actioned",
-            "action": {"type": "json", "src": {"open": {"type": "url", "src": row['arg']}}},
+            "action": {"type": "json", "src": link_action(row['arg'])},
         }],
     })
     if index < 9:
@@ -294,6 +296,36 @@ def link_cell(index, row):
     view = hrow(components, spacing=6)
     view["constraints"] = {"position": "left", "size": {"height": LINK_ROW_HEIGHT}}
     return view
+
+
+def link_action(url):
+    """Open a link in the browser, except YouTube trailers, which play in a
+    sheet over the window (Esc closes it)."""
+    if url.startswith(media.YOUTUBE_WATCH_URL):
+        return trailer_sheet(url)
+    return {"open": {"type": "url", "src": url}}
+
+
+def trailer_sheet(url):
+    key = url[len(media.YOUTUBE_WATCH_URL):]
+    return {"sheet": {"id": "trailer", "closeonescape": True, "root": {
+        "type": "view", "layout": "inline", "direction": "vertical", "spacing": 10,
+        "components": [
+            {"type": "webkitview", "id": "player",
+             "src": TRAILER_EMBED_URL.format(key=key),
+             # Clicks inside the player (e.g. the YouTube logo) go to the browser.
+             "openlinksexternally": True,
+             "constraints": {"size": TRAILER_SIZE}},
+            hrow([
+                {"type": "button", "text": "Open in YouTube",
+                 "events": [{"triggers": "actioned", "action": {"type": "json", "src": {
+                     "open": {"type": "url", "src": url},
+                     "sheet": {"close": "trailer"}}}}]},
+                {"type": "button", "text": "Close", "shortcut": "⌘W",
+                 "events": [{"triggers": "actioned", "action": {"type": "json", "src": {
+                     "sheet": {"close": "trailer"}}}}]},
+            ]),
+        ]}}}
 
 
 def title_logo(item, title):
