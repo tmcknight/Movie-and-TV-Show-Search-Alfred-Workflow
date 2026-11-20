@@ -1,0 +1,184 @@
+{
+  "bundleid": "com.mcknight.movies.details",
+  "variablesconfig": {
+    "item": {
+      "src": "args[0]",
+      "scriptenv": true
+    },
+    "omdb_api_key": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "locale": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "search_language": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_letterboxd": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_simkl": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_moviechat": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_justwatch": {
+      "src": "variable",
+      "scriptenv": true
+    }
+  },
+  "window": {
+    "title": "Movie and TV Show Details",
+    "padding": 20,
+    "root": {
+      "type": "view",
+      "id": "root",
+      "layout": "border",
+      "spacing": 20,
+      "events": [
+        {
+          "triggers": "preload",
+          "action": {
+            "type": "script",
+            "src": "./scripts/load.py",
+            "args": [
+              "{var:item}",
+              "--route"
+            ]
+          }
+        },
+        {
+          "triggers": "launched",
+          "action": {
+            "type": "script",
+            "src": "./scripts/load.py",
+            "args": [
+              "{var:item}"
+            ],
+            "async": true
+          }
+        }
+      ],
+      "components": [
+        {
+          "type": "imageview",
+          "id": "poster",
+          "resize": "fit",
+          "cornerradius": 8,
+          "image": {
+            "type": "symbol",
+            "src": "film"
+          },
+          "constraints": {
+            "region": "left",
+            "position": "top",
+            "size": {
+              "width": 180,
+              "height": 270
+            }
+          }
+        },
+        {
+          "type": "view",
+          "id": "info",
+          "layout": "inline",
+          "spacing": 12,
+          "constraints": {
+            "region": "centre",
+            "position": "top"
+          },
+          "components": [
+            {
+              "type": "view",
+              "layout": "inline",
+              "direction": "vertical",
+              "spacing": 4,
+              "components": [
+                {
+                  "type": "label",
+                  "id": "title",
+                  "text": "Loading…",
+                  "linebreak": "truncatetail",
+                  "selectable": true,
+                  "font": {
+                    "size": "large",
+                    "weight": "bold"
+                  }
+                },
+                {
+                  "type": "label",
+                  "id": "subtitle",
+                  "text": " ",
+                  "linebreak": "truncatetail",
+                  "colour": "secondaryLabelColor"
+                }
+              ]
+            },
+            {
+              "type": "label",
+              "id": "overview",
+              "text": "",
+              "linebreak": "wordwrap",
+              "selectable": true,
+              "constraints": {
+                "size": {
+                  "width": 460
+                }
+              }
+            },
+            {
+              "type": "view",
+              "layout": "inline",
+              "direction": "vertical",
+              "spacing": 14,
+              "components": [
+                {
+                  "type": "view",
+                  "id": "credits",
+                  "layout": "inline",
+                  "components": [
+                    {
+                      "type": "label",
+                      "text": " "
+                    }
+                  ],
+                  "direction": "vertical",
+                  "spacing": 4
+                },
+                {
+                  "type": "view",
+                  "id": "links",
+                  "layout": "inline",
+                  "components": [
+                    {
+                      "type": "label",
+                      "text": " "
+                    }
+                  ],
+                  "direction": "vertical",
+                  "spacing": 2
+                }
+              ],
+              "constraints": {
+                "insets": {
+                  "top": 6
+                }
+              }
+            }
+          ],
+          "direction": "vertical"
+        }
+      ]
+    },
+    "size": {
+      "height": 400
+    }
+  }
+}

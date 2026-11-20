@@ -9,6 +9,7 @@ An Alfred workflow to search for a movie or tv show and get a few ratings.
 - Download and install the [latest workflow release](https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow/releases/latest).
 - Type 'movie', then a movie title. Hit ENTER on an item to get info.
 - Type 'tv', then a tv show title. Hit ENTER on an item to get info.
+- Alfred 6: hit ENTER on the title row of the details to open a details window with the poster, overview, credits, ratings and links. ⌘1–⌘9 open the links, and ESC returns to the details.
 
 ## Credits
 

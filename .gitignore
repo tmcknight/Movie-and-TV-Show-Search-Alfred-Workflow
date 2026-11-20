@@ -3,3 +3,5 @@ poster.jpg
 item.html
 .vscode
 .DS_Store
+prefs.plist
+__pycache__/

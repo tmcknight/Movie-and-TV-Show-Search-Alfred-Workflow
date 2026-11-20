@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 import re
 import json
+import subprocess
 from mako.template import Template
 from unicodedata import normalize
 
@@ -31,10 +32,10 @@ CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
 HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
 
-INCLUDE_LETTERBOXD = os.environ['include_letterboxd'] == "1"
-INCLUDE_SIMKL = os.environ['include_simkl'] == "1"
-INCLUDE_JUSTWATCH = os.environ['include_justwatch'] == "1"
-INCLUDE_MOVIECHAT = os.environ['include_moviechat'] == "1"
+INCLUDE_LETTERBOXD = os.environ.get('include_letterboxd', '0') == "1"
+INCLUDE_SIMKL = os.environ.get('include_simkl', '0') == "1"
+INCLUDE_JUSTWATCH = os.environ.get('include_justwatch', '0') == "1"
+INCLUDE_MOVIECHAT = os.environ.get('include_moviechat', '0') == "1"
 
 if not os.path.exists(CACHEDIR):
     os.makedirs(CACHEDIR)
@@ -53,6 +54,7 @@ def main(media_type, query):
             log('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
+                warm_details_window(m.group(1) + ':' + m.group(2), item)
         except AttributeError as e:
             log(e)
             items.append({
@@ -106,6 +108,27 @@ def main(media_type, query):
     output_items()
 
 
+def details_cache(ref):
+    return os.path.join(CACHEDIR, 'details-' + ref.replace(':', '-') + '.json')
+
+
+def warm_details_window(ref, item):
+    """Hand this item to the Alfred 6 details window's script in the
+    background, so the window opens already filled in on ↩."""
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          'details.alfredui', 'scripts', 'load.py')
+    if not os.path.exists(script):
+        return
+    try:
+        with open(details_cache(ref), 'w') as f:
+            json.dump({"item": item, "rows": items}, f)
+        subprocess.Popen([sys.executable, script, ref, '--warm'],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError as e:
+        log(repr(e))
+
+
 def get_tmdb_configuration(api_key):
     url = TMDB_API_URL + 'configuration'
     params = dict(api_key=api_key)
@@ -154,7 +177,9 @@ def show_item_info(item, media_type):
     items.append({"title": title,
                   "subtitle": get_subtitle(item, omdb_info, media_type),
                   "valid": True,
-                  # icon : "poster.jpg",
+                  # ↩ opens the Alfred 6 details window; every other row's arg
+                  # is a URL, which the window's script opens instead.
+                  "arg": media_type[:1] + ':' + str(item['id']),
                   "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE),
                   "text": {
                       "copy": str(item['id'])}

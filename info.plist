@@ -32,8 +32,6 @@
 					<false/>
 				</dict>
 			</array>
-			<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
-			<array/>
 			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 			<array>
 				<dict>
@@ -51,7 +49,7 @@
 			<array>
 				<dict>
 					<key>destinationuid</key>
-					<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+					<string>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</string>
 					<key>modifiers</key>
 					<integer>0</integer>
 					<key>modifiersubtext</key>
@@ -91,7 +89,7 @@
 			<array>
 				<dict>
 					<key>destinationuid</key>
-					<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+					<string>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</string>
 					<key>modifiers</key>
 					<integer>0</integer>
 					<key>modifiersubtext</key>
@@ -159,9 +157,9 @@
 					<key>queuedelayimmediatelyinitially</key>
 					<false/>
 					<key>queuedelaymode</key>
-					<integer>1</integer>
+					<integer>0</integer>
 					<key>queuemode</key>
-					<integer>1</integer>
+					<integer>2</integer>
 					<key>runningsubtext</key>
 					<string>Searching for "{query}"...</string>
 					<key>script</key>
@@ -200,29 +198,6 @@
 				<string>1BD6325A-1219-4F0A-B4EE-DC9C96450986</string>
 				<key>version</key>
 				<integer>1</integer>
-			</dict>
-			<dict>
-				<key>config</key>
-				<dict>
-					<key>concurrently</key>
-					<false/>
-					<key>escaping</key>
-					<integer>0</integer>
-					<key>script</key>
-					<string>/usr/bin/python3 openurls.py -u="${1}"</string>
-					<key>scriptargtype</key>
-					<integer>1</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>type</key>
-					<integer>0</integer>
-				</dict>
-				<key>type</key>
-				<string>alfred.workflow.action.script</string>
-				<key>uid</key>
-				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
-				<key>version</key>
-				<integer>2</integer>
 			</dict>
 			<dict>
 				<key>config</key>
@@ -326,9 +301,9 @@
 					<key>queuedelayimmediatelyinitially</key>
 					<false/>
 					<key>queuedelaymode</key>
-					<integer>1</integer>
+					<integer>0</integer>
 					<key>queuemode</key>
-					<integer>1</integer>
+					<integer>2</integer>
 					<key>runningsubtext</key>
 					<string>Searching for "{query}"...</string>
 					<key>script</key>
@@ -353,6 +328,23 @@
 				<key>version</key>
 				<integer>3</integer>
 			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>launchmode</key>
+					<integer>0</integer>
+					<key>path</key>
+					<string>details.alfredui</string>
+					<key>stackview</key>
+					<true/>
+				</dict>
+				<key>type</key>
+				<string>alfred.workflow.userinterface.alfredui</string>
+				<key>uid</key>
+				<string>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</string>
+				<key>version</key>
+				<integer>1</integer>
+			</dict>
 		</array>
 		<key>readme</key>
 		<string>Run the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`) to search for movies and TV shows, respectively. Press ↩ to get details and ratings.
@@ -375,19 +367,21 @@
 				<key>ypos</key>
 				<real>300</real>
 			</dict>
-			<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
-			<dict>
-				<key>xpos</key>
-				<real>660</real>
-				<key>ypos</key>
-				<real>275</real>
-			</dict>
 			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 			<dict>
 				<key>xpos</key>
 				<real>110</real>
 				<key>ypos</key>
 				<real>140</real>
+			</dict>
+			<key>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</key>
+			<dict>
+				<key>note</key>
+				<string>Details list rows: the title row (m:&lt;id&gt;) opens the details window (⎋ goes back); link rows are opened by the window script before it shows.</string>
+				<key>xpos</key>
+				<real>660</real>
+				<key>ypos</key>
+				<real>275</real>
 			</dict>
 			<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 			<dict>

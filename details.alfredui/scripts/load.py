@@ -1,0 +1,320 @@
+#!/usr/bin/python3
+"""Fill the details window with TMDb/OMDb data.
+
+Every row of the details list is connected straight to the Alfred UI object
+(a Conditional in between would stop ⎋ returning to the list), so the row's
+arg arrives here and decides what happens:
+
+- "load.py <arg> --route" runs on the window's "preload" event, which holds
+  the window back until it returns, so it must be fast. A "||"-delimited list
+  of URLs (every row but the title row) is opened and the UI finishes before
+  it ever shows. Anything else prints {}.
+- "load.py m:<tmdb id>" / "t:<tmdb id>" runs on "launched" (the title row):
+  print JSON actions that fill the window, fetching the details first unless
+  they are cached.
+- "load.py <ref> --warm" is started in the background by the details list,
+  which has just fetched the item, so the window is cached before ↩. When it
+  is, the preload step fills the window before it shows.
+"""
+import json
+import os
+import re
+import sys
+import time
+import urllib.error
+import urllib.request
+
+WORKFLOW_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
+
+# media.py loads templates and icons by paths relative to the workflow folder.
+os.chdir(WORKFLOW_DIR)
+sys.path.insert(0, WORKFLOW_DIR)
+
+import media  # noqa: E402
+import openurls  # noqa: E402
+
+POSTER_URL = 'https://image.tmdb.org/t/p/w342'
+TMDB_URL = 'https://www.themoviedb.org/'
+LINK_ICON_SIZE = {"width": 16, "height": 16}
+LINK_ROW_HEIGHT = 24
+LINK_COL_WIDTH = 250
+LINK_GAP = 12
+CREDIT_KEY_WIDTH = 64
+BLANK_LABEL = {"type": "label", "text": " "}
+OVERVIEW_MAX_CHARS = 550
+CACHE_SECONDS = 600
+CREDIT_NAMES = {'Actors': 'Cast'}
+SITE_NAMES = {'Rotten Tomatoes Audience Score': 'Audience'}
+
+
+def route(ref):
+    if '://' in (ref or ''):
+        openurls.main(ref)
+        emit({"finish": {"args": ""}})
+    else:
+        # Fill the window before it shows if the details list warmed it up;
+        # an empty result is logged as invalid JSON, so send {} instead.
+        emit(read_cache(window_cache(ref)) or {})
+    return 0
+
+
+def main(ref):
+    if '://' in (ref or ''):
+        return 0  # already opened by route() on preload
+
+    cached = read_cache(window_cache(ref))
+    if cached:
+        emit(cached)
+        return 0
+
+    kind, _, tmdb_id = (ref or '').partition(':')
+    if kind not in ('m', 't') or not tmdb_id.isdigit():
+        return error(f"Unknown item '{ref}'.")
+
+    media_type = 'movie' if kind == 'm' else 'tv'
+    try:
+        item = media.get_tmdb_info(kind, tmdb_id, media.DEFAULT_TMDB_API_KEY,
+                                   os.environ.get('search_language', 'en'))
+        media.show_item_info(item, media_type)
+    except urllib.error.HTTPError as e:
+        media.log(repr(e))
+        if e.code == 404:
+            return error('Details not found.')
+        return error('Something went wrong. Please try again later.')
+    except Exception as e:
+        media.log(repr(e))
+        return error('Something went wrong. Please check your internet connection.')
+
+    actions = build(item, media_type, media.items)
+    write_cache(window_cache(ref), actions)
+    emit(actions)
+    return 0
+
+
+def warm(ref):
+    """Run in the background by the details list (media.py), which has just
+    fetched this item: build the window from its data and download the poster
+    now, so the window opens already filled in."""
+    data = read_cache(media.details_cache(ref))
+    if data:
+        media_type = 'movie' if ref.startswith('m:') else 'tv'
+        write_cache(window_cache(ref), build(data['item'], media_type, data['rows']))
+    return 0
+
+
+def build(item, media_type, rows):
+    """JSON actions that fill the window, from a TMDb item and the details
+    list rows that media.show_item_info made for it."""
+    if not rows or 'subtitle' not in rows[0]:
+        # No OMDb record (usually no IMDb id): show what TMDb has, unrated.
+        rows = tmdb_rows(item, media_type)
+
+    header, rest = rows[0], rows[1:]
+    links = [row for row in rest if row.get('arg') and '||' not in row['arg']]
+    people = [row for row in rest if not row.get('arg')]
+
+    update = {
+        "title": {"text": header['title']},
+        "subtitle": {"text": header['subtitle']},
+        "overview": {"text": clip(item.get('overview') or 'No overview available.',
+                                  OVERVIEW_MAX_CHARS)},
+    }
+    poster = download_poster(item)
+    if poster:
+        update["poster"] = {"image": {"type": "file", "src": poster}}
+
+    return {
+        "update": {"ids": update, "relayout": True},
+        "replace": {"ids": {
+            "credits": credits_form(people),
+            "links": links_grid(links),
+        }},
+    }
+
+
+def window_cache(ref):
+    return os.path.join(media.CACHEDIR, 'window-' + (ref or '').replace(':', '-') + '.json')
+
+
+def read_cache(path):
+    try:
+        if time.time() - os.path.getmtime(path) < CACHE_SECONDS:
+            with open(path) as f:
+                return json.load(f)
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def write_cache(path, data):
+    tmp = path + '.tmp'
+    with open(tmp, 'w') as f:
+        json.dump(data, f)
+    os.replace(tmp, path)
+
+
+def tmdb_rows(item, media_type):
+    """Header and link rows in show_item_info's shape, from TMDb data alone."""
+    title = item.get('title') or item.get('name') or 'Untitled'
+    year = (item.get('release_date') or item.get('first_air_date') or '')[:4]
+    if year:
+        title += f' ({year})'
+    runtime = item.get('runtime') or next(iter(item.get('episode_run_time') or []), None)
+    subtitle = [media.format_runtime(f'{runtime} min')] if runtime else []
+    subtitle += [', '.join(g['name'] for g in item.get('genres', []))] if item.get('genres') else []
+
+    rows = [{"title": title, "subtitle": ' \u2022 '.join(subtitle)},
+            {"title": 'TMDb', "symbol": 'film',
+             "arg": f"{TMDB_URL}{media_type}/{item['id']}"}]
+    trailer = next((v for v in item.get('videos', {}).get('results', [])
+                    if v.get('type') == 'Trailer' and v.get('site') == 'YouTube'), None)
+    if trailer:
+        rows.append({"title": 'Watch Trailer', "icon": {"path": 'img/youtube.png'},
+                     "arg": media.YOUTUBE_WATCH_URL + trailer['key']})
+    return rows
+
+
+def clip(text, limit):
+    """Trim to a word boundary; a wrapping label has no ellipsis of its own."""
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(' ', 1)[0].rstrip(',.;:—-') + '…'
+
+
+def credits_form(people):
+    rows = []
+    for row in people:
+        if not row['title'] or row['title'] == 'N/A':
+            continue
+        rows.append(hrow([
+            {"type": "label", "text": CREDIT_NAMES.get(row['subtitle'], row['subtitle']),
+             "colour": "secondaryLabelColor", "textalign": "left",
+             "constraints": {"size": {"width": CREDIT_KEY_WIDTH}}},
+            {"type": "label", "text": row['title'], "tooltip": row['title'],
+             "linebreak": "truncatetail", "selectable": True},
+        ]))
+    return vstack("credits", rows, spacing=4)
+
+
+def links_grid(links):
+    """Two left-aligned columns of links. Alfred UI centres content in grid
+    cells and in fixed-width horizontal rows, but a vertical inline column
+    with left-pinned rows lines up cleanly."""
+    cells = [link_cell(i, row) for i, row in enumerate(links)]
+    half = -(-len(cells) // 2)
+    columns = [cells[:half], cells[half:]]
+    return {"type": "view", "id": "links", "layout": "inline", "direction": "horizontal",
+            "spacing": LINK_GAP, "constraints": {"position": "left"},
+            "components": [{"type": "view", "layout": "inline", "direction": "vertical",
+                            "spacing": 2,
+                            "constraints": {"size": {"width": LINK_COL_WIDTH}},
+                            "components": column or [BLANK_LABEL]}
+                           for column in columns]}
+
+
+def hrow(components, spacing=8):
+    # A vertical inline layout centres narrower rows; pin them left.
+    return {"type": "view", "layout": "inline", "direction": "horizontal",
+            "spacing": spacing, "constraints": {"position": "left"},
+            "components": components}
+
+
+def vstack(view_id, components, spacing):
+    # Never leave a view empty: an empty inline view inside a border region
+    # gets a NaN height and crashes Alfred 6.0.2 (AUIInlineLayout).
+    return {"type": "view", "id": view_id, "layout": "inline", "direction": "vertical",
+            "spacing": spacing, "components": components or [BLANK_LABEL]}
+
+
+def link_text(row):
+    """Short label for a details row, e.g. 'IMDb 8.4 · 1.3M votes'."""
+    title, subtitle = row['title'], row.get('subtitle', '')
+    if title[:1].isdigit():
+        # Rating rows: score in the title, "Site (details)" in the subtitle.
+        site, _, details = subtitle.partition(' (')
+        site = SITE_NAMES.get(site, site)
+        votes = re.match(r'([\d,]+) votes', details)
+        if votes:
+            return f"{site} {title}  ·  {compact(int(votes.group(1).replace(',', '')))} votes"
+        return f"{site} {title}"
+    if title == 'JustWatch' and subtitle:
+        # "Stream: X | Buy: Y | Rent: Z" → "X"
+        return f"JustWatch  ·  {subtitle.split(' | ')[0].split(': ', 1)[-1]}"
+    return title
+
+
+def compact(n):
+    for size, suffix in ((1_000_000, 'M'), (1_000, 'K')):
+        if n >= size:
+            return f"{n / size:.1f}".rstrip('0').rstrip('.') + suffix
+    return str(n)
+
+
+def link_cell(index, row):
+    """Icon + borderless button. A button's own image overlaps its text, so
+    the icon is a separate imageview beside it."""
+    components = []
+    icon = row.get('icon', {}).get('path')
+    if row.get('symbol'):
+        components.append({
+            "type": "imageview",
+            "image": {"type": "symbol", "src": row['symbol']},
+            "constraints": {"size": LINK_ICON_SIZE, "position": "centre"},
+        })
+    elif icon:
+        components.append({
+            "type": "imageview",
+            "image": {"type": "file", "src": os.path.join(WORKFLOW_DIR, icon)},
+            "constraints": {"size": LINK_ICON_SIZE, "position": "centre"},
+        })
+    components.append({
+        "type": "button",
+        "id": f"link{index}",
+        "text": link_text(row),
+        "bordered": False,
+        "tooltip": row['arg'] + (f"  (⌘{index + 1})" if index < 9 else ''),
+        "events": [{
+            "triggers": "actioned",
+            "action": {"type": "json", "src": {"open": {"type": "url", "src": row['arg']}}},
+        }],
+    })
+    if index < 9:
+        # ⌘1–⌘9 open the links in order, like Alfred's own result shortcuts.
+        components[-1]["shortcut"] = f"⌘{index + 1}"
+    view = hrow(components, spacing=6)
+    view["constraints"] = {"position": "left", "size": {"height": LINK_ROW_HEIGHT}}
+    return view
+
+
+def download_poster(item):
+    """Alfred UI images load from files only, so cache the poster locally."""
+    path = item.get('poster_path')
+    if not path:
+        return None
+    target = os.path.join(media.CACHEDIR, 'poster' + path.replace('/', '-'))
+    if not os.path.exists(target):
+        try:
+            urllib.request.urlretrieve(POSTER_URL + path, target)
+        except Exception as e:
+            media.log(repr(e))
+            return None
+    return target
+
+
+def error(message):
+    # Exit 0: Alfred UI ignores stdout from a script that exits non-zero, which
+    # would leave the window stuck on "Loading…".
+    emit({"update": {"ids": {"title": {"text": message}}}})
+    return 0
+
+
+def emit(actions):
+    sys.stdout.write(json.dumps(actions))
+    sys.stdout.flush()
+
+
+if __name__ == '__main__':
+    ref = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('item')
+    mode = sys.argv[2] if len(sys.argv) > 2 else ''
+    sys.exit({'--route': route, '--warm': warm}.get(mode, main)(ref))
