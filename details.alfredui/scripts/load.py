@@ -42,7 +42,7 @@ POSTER_SIZE = 'w342'
 BACKDROP_SIZE = 'w300'
 # Alfred UI has no blur or text shadow. Shrinking the backdrop this far and
 # letting the imageview scale it up blurs it, so no detail fights the text.
-BACKDROP_BLUR_WIDTH = 48
+BACKDROP_BLUR_WIDTH = 120
 LOGO_SIZE = 'w500'
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
