@@ -55,10 +55,7 @@ TRAILER_PORT = 47826
 TRAILER_PAGE_URL = 'http://localhost:{port}/trailer?v={key}'
 # Fallback when the local player server can't start: YouTube's own page.
 TRAILER_FALLBACK_URL = 'https://m.youtube.com/watch?v={key}'
-TRAILER_SIZE = {"width": 560, "height": 315}
-# Trailer-only window opened from the details list: 16:9 at a typical theme
-# width (the player letterboxes on black if the theme is wider or narrower).
-TRAILER_WINDOW_HEIGHT = 405
+VIDEO_ID = re.compile(r'^[A-Za-z0-9_-]{6,20}$')
 LOGO_MAX = {"width": 420, "height": 64}
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
@@ -77,13 +74,9 @@ LINK_SYMBOLS = {'TMDb': 'film'}
 def route(ref):
     ref = ref or ''
     if ref.startswith(media.YOUTUBE_WATCH_URL) and '||' not in ref:
-        # The details list's Watch Trailer row: the window shows just the
-        # player instead of opening the browser. ⎋ returns to the list.
-        key = ref[len(media.YOUTUBE_WATCH_URL):]
-        emit({"replace": {"ids": {"content": {
-                  "type": "webkitview", "id": "content", "src": trailer_page(key),
-                  "openlinksexternally": True}}},
-              "window": {"resize": {"height": TRAILER_WINDOW_HEIGHT}}})
+        # The details list's Watch Trailer row: hand the video to the trailer
+        # window (connected after this UI) instead of opening the browser.
+        emit(play_trailer(ref))
     elif '://' in ref:
         openurls.main(ref)
         emit({"finish": {"args": ""}})
@@ -312,25 +305,39 @@ def link_cell(index, row):
 
 def link_action(url):
     """Open a link in the browser, except YouTube trailers, which play in a
-    sheet over the window (Esc closes it)."""
+    separate trailer window that can go full screen."""
     if url.startswith(media.YOUTUBE_WATCH_URL):
-        # A script, so the local player server starts only when it's needed.
-        key = url[len(media.YOUTUBE_WATCH_URL):]
-        return {"type": "script", "src": "./scripts/load.py", "args": [key, "--trailer"]}
+        return {"type": "json", "src": play_trailer(url)}
     return {"type": "json", "src": {"open": {"type": "url", "src": url}}}
 
 
-def trailer(key):
-    """Run when Watch Trailer is clicked: open the trailer sheet on the local
-    player page, starting its server if needed."""
-    emit(trailer_sheet(media.YOUTUBE_WATCH_URL + key, trailer_page(key)))
+def play_trailer(url):
+    """Close this window and open the trailer window, which is connected
+    after it: an Alfred UI can't go full screen inside Alfred, and Alfred's
+    web view can't take the YouTube player full screen itself."""
+    return {"finish": {"args": url[len(media.YOUTUBE_WATCH_URL):]}}
+
+
+def player_check(key):
+    """Trailer window, preload: it is also connected to every other way this
+    window finishes (e.g. opening a link), so close without showing unless
+    it was handed a YouTube id."""
+    emit({} if VIDEO_ID.match(key or '') else {"finish": {}})
+    return 0
+
+
+def player(key):
+    """Trailer window, launched: load the player page (starting the local
+    server can take a moment, so this runs async)."""
+    if VIDEO_ID.match(key or ''):
+        emit({"update": {"ids": {"player": {"src": trailer_page(key)}}}})
     return 0
 
 
 def trailer_page(key):
     """The local clean player page for a YouTube id, starting its server if
     needed, or YouTube's own page if that fails."""
-    if re.match(r'^[A-Za-z0-9_-]{6,20}$', key or '') and trailer_server():
+    if VIDEO_ID.match(key or '') and trailer_server():
         return TRAILER_PAGE_URL.format(port=TRAILER_PORT, key=key)
     return TRAILER_FALLBACK_URL.format(key=key)
 
@@ -361,27 +368,6 @@ def ping_trailer_server():
             return r.read() == b'movies-trailer'
     except OSError:
         return False
-
-
-def trailer_sheet(url, page):
-    return {"sheet": {"id": "trailer", "closeonescape": True, "root": {
-        "type": "view", "layout": "inline", "direction": "vertical", "spacing": 10,
-        "components": [
-            {"type": "webkitview", "id": "player",
-             "src": page,
-             # Clicks inside the player (e.g. the YouTube logo) go to the browser.
-             "openlinksexternally": True,
-             "constraints": {"size": TRAILER_SIZE}},
-            hrow([
-                {"type": "button", "text": "Open in YouTube",
-                 "events": [{"triggers": "actioned", "action": {"type": "json", "src": {
-                     "open": {"type": "url", "src": url},
-                     "sheet": {"close": "trailer"}}}}]},
-                {"type": "button", "text": "Close", "shortcut": "⌘W",
-                 "events": [{"triggers": "actioned", "action": {"type": "json", "src": {
-                     "sheet": {"close": "trailer"}}}}]},
-            ]),
-        ]}}}
 
 
 def title_logo(item, title):
@@ -512,4 +498,5 @@ def emit(actions):
 if __name__ == '__main__':
     ref = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('item')
     mode = sys.argv[2] if len(sys.argv) > 2 else ''
-    sys.exit({'--route': route, '--warm': warm, '--trailer': trailer}.get(mode, main)(ref))
+    modes = {'--route': route, '--warm': warm, '--player-check': player_check, '--player': player}
+    sys.exit(modes.get(mode, main)(ref))
