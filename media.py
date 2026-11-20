@@ -97,6 +97,7 @@ def main(media_type, query):
                 items.append({"title": "Nothing was found."})
             results['results'].sort(key=extract_popularity, reverse=True)
             titles = {}
+            seen = {}
             for item in results['results']:
                 poster = 'https://image.tmdb.org/t/p/w500' + item['poster_path'] if item['poster_path'] else ''
 
@@ -108,21 +109,20 @@ def main(media_type, query):
                     title = item['name']
                     if item.get('first_air_date', 0):
                         title += ' (' + item['first_air_date'][:4] + ')'
-                ref = media_type[:1] + ':' + str(item['id'])
-                titles[title] = None if title in titles else ref
+                # Results that share a title and year get numbered, so each
+                # one autocompletes a label that maps back to it.
+                seen[title] = seen.get(title, 0) + 1
+                if seen[title] > 1:
+                    title += ' · ' + str(seen[title])
+                titles[title] = media_type[:1] + ':' + str(item['id'])
                 items.append({
                     "title": title,
                     "arg": str(item['id']),
                     "quicklookurl": poster,
                     "valid": False,
-                    "autocomplete": ref
+                    "autocomplete": title
                 })
-            # Autocomplete the title rather than the id, unless the search
-            # found two items with the same title and year.
-            for row in items:
-                if titles.get(row['title']):
-                    row['autocomplete'] = row['title']
-            save_titles(media_type, {t: r for t, r in titles.items() if r})
+            save_titles(media_type, titles)
     output_items()
 
 
