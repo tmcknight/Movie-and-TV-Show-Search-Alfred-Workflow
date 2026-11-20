@@ -16,6 +16,7 @@ arg arrives here and decides what happens:
   which has just fetched the item, so the window is cached before ↩. When it
   is, the preload step fills the window before it shows.
 """
+import html
 import json
 import os
 import plistlib
@@ -63,6 +64,39 @@ TRAILERS_IN_ALFRED = os.environ.get('trailers_in_alfred', '0') == '1'
 LOGO_MAX = {"width": 420, "height": 64}
 POSTER_BOX = {"width": 180, "height": 270}
 OVERVIEW_WIDTH = 460
+POSTER_PAGE = """<!doctype html>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000;
+               -webkit-user-select: none; cursor: default; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  button { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+           padding: 5px 12px; border: 0; border-radius: 999px;
+           font: 500 12px -apple-system, sans-serif; color: #fff;
+           background: rgba(30, 30, 30, .72); -webkit-backdrop-filter: blur(12px);
+           box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25);
+           opacity: 0; transition: opacity .15s; }
+  body:hover button, button.done { opacity: 1; }
+  button:hover { background: rgba(60, 60, 60, .8); }
+</style>
+<img src="{src}" alt="" draggable="false">
+<button>Copy</button>
+<script>
+  const button = document.querySelector('button');
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  button.addEventListener('click', () => {
+    // The details window's script copies the image when the URL changes.
+    location.hash = 'copy-' + Date.now();
+    button.textContent = 'Copied';
+    button.classList.add('done');
+    clearTimeout(button.timer);
+    button.timer = setTimeout(() => {
+      button.textContent = 'Copy';
+      button.classList.remove('done');
+    }, 1500);
+  });
+</script>
+"""
 LINK_ICON_SIZE = {"width": 16, "height": 16}
 LINK_ROW_HEIGHT = 24
 LINK_COL_WIDTH = 250
@@ -165,10 +199,25 @@ def build(item, rows):
 
 
 def poster_view(path):
-    image = {"type": "file", "src": path} if path else {"type": "symbol", "src": "film"}
-    return {"type": "imageview", "id": "poster", "resize": "fit", "cornerradius": 8,
-            "image": image,
-            "constraints": {"region": "left", "position": "top", "size": POSTER_BOX}}
+    """The poster, with a Copy button that shows on hover. Alfred UI has no
+    hover event, so the poster is a small web page in a webkitview; the
+    button changes the page's URL, which fires the view's "changed" event."""
+    if not path:
+        return {"type": "imageview", "id": "poster", "resize": "fit", "cornerradius": 8,
+                "image": {"type": "symbol", "src": "film"},
+                "constraints": {"region": "left", "position": "top", "size": POSTER_BOX}}
+    page = os.path.splitext(path)[0] + '.html'
+    if not os.path.exists(page):
+        with open(page, 'w') as f:
+            f.write(POSTER_PAGE.replace('{src}', html.escape(os.path.basename(path))))
+    return {"type": "view", "id": "poster", "layout": "stack", "cornerradius": 8,
+            "cliptobounds": True, "background": "#000000",
+            "constraints": {"region": "left", "position": "top", "size": POSTER_BOX},
+            "components": [{
+                "type": "webkitview", "src": page,
+                "events": [{"triggers": "changed", "action": {
+                    "type": "script", "src": "./scripts/copy_poster.zsh",
+                    "args": ["{value:self.src}", path], "async": True}}]}]}
 
 
 def title_label(text):
