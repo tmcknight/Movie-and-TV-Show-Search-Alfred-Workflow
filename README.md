@@ -59,7 +59,6 @@ Trailers open on YouTube in your browser. To play them in their own window inste
 
 - The movie and TV show details come from [TMDb](https://themoviedb.org/) and the [OMDb API](https://www.omdbapi.com). This product uses the TMDb API but is not endorsed or certified by TMDb.
 - Big thanks to [vitorgalvao](https://github.com/vitorgalvao) and [deanishe](https://github.com/deanishe) for their commitment to the Alfred community.
-- Uses [Mako Templates](https://www.makotemplates.org).
 - I love [Alfred](https://alfredapp.com/)!
 
 ## Releasing

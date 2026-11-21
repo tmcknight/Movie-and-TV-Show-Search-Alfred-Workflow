@@ -4,7 +4,6 @@ from __future__ import unicode_literals, print_function
 import os
 import sys
 import argparse
-import pathlib
 import urllib
 import urllib.error
 import urllib.parse
@@ -14,7 +13,6 @@ import json
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
-from mako.template import Template
 from unicodedata import normalize
 
 ICON_ROOT = '/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources'
@@ -35,7 +33,6 @@ MOVIECHAT_URL = 'https://moviechat.org/'
 TMDB_URL = 'https://www.themoviedb.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
-HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
 MAX_SAVED_TITLES = 500
 # What an autocompleted search result label looks like: "Title (Year)",
 # "Title (TBA)", optionally numbered "· 2".
@@ -412,7 +409,6 @@ def show_item_info(item, media_type):
                   # ↩ opens the Alfred 6 details window; every other row's arg
                   # is a URL, which the window's script opens instead.
                   "arg": media_type[:1] + ':' + str(item['id']),
-                  "quicklookurl": pathlib.Path(HTML_SUMMARY_FILE).as_uri(),
                   "text": {
                       "copy": str(item['id'])},
                   # The same small poster as the search result (usually
@@ -616,8 +612,6 @@ def show_item_info(item, media_type):
                           "valid": False,
                           "text": {"copy": people}})
 
-    generate_item_html(omdb_info, item, media_type)
-
     return
 
 
@@ -686,32 +680,6 @@ def get_tomato_user_subtitle(omdb_info):
     if details:
         return 'Rotten Tomatoes Audience Score (' + ', '.join(details) + ')'
     return 'Rotten Tomatoes Audience Score'
-
-
-def generate_item_html(omdb_info, tmdb_info, media_type):
-    item_template = Template(
-        filename='templates/media.html', output_encoding='utf-8')
-
-    production_company = 'N/A'
-    if tmdb_info['production_companies']:
-        production_company = tmdb_info['production_companies'][0]['name']
-
-    html = item_template.render(
-        title=get_omdb_value(omdb_info, 'Title') or tmdb_info.get('title') or tmdb_info.get('name'),
-        backdrop_path=tmdb_info['backdrop_path'],
-        poster=tmdb_info['poster_path'],
-        production_company=production_company,
-        overview=tmdb_info['overview'],
-        release_date=get_omdb_value(omdb_info, 'Released') or tmdb_info.get(
-            'release_date') or tmdb_info.get('first_air_date') or 'N/A',
-        director=omdb_info.get('Director', 'N/A'),
-        actors=omdb_info.get('Actors', 'N/A'),
-        genre=get_subtitle(tmdb_info, omdb_info, media_type)
-    )
-    with open(HTML_SUMMARY_FILE, "wb") as text_file:
-        text_file.write(html)
-
-    return
 
 
 def get_subtitle(tmdb_info, omdb_info, media_type):
