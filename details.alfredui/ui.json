@@ -1,0 +1,100 @@
+{
+  "bundleid": "com.mcknight.movies.details",
+  "variablesconfig": {
+    "item": {
+      "src": "args[0]",
+      "scriptenv": true
+    },
+    "omdb_api_key": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "locale": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "search_language": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_letterboxd": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_simkl": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_moviechat": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "include_justwatch": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "trailers_in_alfred": {
+      "src": "variable",
+      "scriptenv": true
+    }
+  },
+  "window": {
+    "title": "Movie and TV Show Details",
+    "padding": 0,
+    "root": {
+      "type": "view",
+      "id": "root",
+      "layout": "stack",
+      "cliptobounds": true,
+      "appearance": "dark",
+      "events": [
+        {
+          "triggers": "preload",
+          "action": {
+            "type": "script",
+            "src": "./scripts/load.py",
+            "args": [
+              "{var:item}",
+              "--route"
+            ]
+          }
+        },
+        {
+          "triggers": "launched",
+          "action": {
+            "type": "script",
+            "src": "./scripts/load.py",
+            "args": [
+              "{var:item}"
+            ],
+            "async": true
+          }
+        }
+      ],
+      "components": [
+        {
+          "type": "webkitview",
+          "id": "page",
+          "focus": true,
+          "openlinksexternally": "^https?://",
+          "events": [
+            {
+              "triggers": "changed",
+              "action": {
+                "type": "script",
+                "src": "./scripts/page_event.zsh",
+                "args": [
+                  "{value:self.src}"
+                ],
+                "async": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "size": {
+      "height": 310
+    }
+  }
+}

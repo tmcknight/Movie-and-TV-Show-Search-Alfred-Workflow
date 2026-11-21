@@ -32,8 +32,19 @@
 					<false/>
 				</dict>
 			</array>
-			<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
-			<array/>
+			<key>5E8B3C2D-71A4-4F9E-B6D0-2C9A8E4F1B37</key>
+			<array>
+				<dict>
+					<key>destinationuid</key>
+					<string>A4C2E1F7-3B9D-4E6A-8F15-C7D2B9E04A61</string>
+					<key>modifiers</key>
+					<integer>0</integer>
+					<key>modifiersubtext</key>
+					<string></string>
+					<key>vitoclose</key>
+					<false/>
+				</dict>
+			</array>
 			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 			<array>
 				<dict>
@@ -47,11 +58,24 @@
 					<false/>
 				</dict>
 			</array>
+			<key>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</key>
+			<array>
+				<dict>
+					<key>destinationuid</key>
+					<string>A4C2E1F7-3B9D-4E6A-8F15-C7D2B9E04A61</string>
+					<key>modifiers</key>
+					<integer>0</integer>
+					<key>modifiersubtext</key>
+					<string></string>
+					<key>vitoclose</key>
+					<false/>
+				</dict>
+			</array>
 			<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 			<array>
 				<dict>
 					<key>destinationuid</key>
-					<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+					<string>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</string>
 					<key>modifiers</key>
 					<integer>0</integer>
 					<key>modifiersubtext</key>
@@ -91,7 +115,7 @@
 			<array>
 				<dict>
 					<key>destinationuid</key>
-					<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
+					<string>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</string>
 					<key>modifiers</key>
 					<integer>0</integer>
 					<key>modifiersubtext</key>
@@ -159,9 +183,9 @@
 					<key>queuedelayimmediatelyinitially</key>
 					<false/>
 					<key>queuedelaymode</key>
-					<integer>1</integer>
+					<integer>0</integer>
 					<key>queuemode</key>
-					<integer>1</integer>
+					<integer>2</integer>
 					<key>runningsubtext</key>
 					<string>Searching for "{query}"...</string>
 					<key>script</key>
@@ -200,29 +224,6 @@
 				<string>1BD6325A-1219-4F0A-B4EE-DC9C96450986</string>
 				<key>version</key>
 				<integer>1</integer>
-			</dict>
-			<dict>
-				<key>config</key>
-				<dict>
-					<key>concurrently</key>
-					<false/>
-					<key>escaping</key>
-					<integer>0</integer>
-					<key>script</key>
-					<string>/usr/bin/python3 openurls.py -u="${1}"</string>
-					<key>scriptargtype</key>
-					<integer>1</integer>
-					<key>scriptfile</key>
-					<string></string>
-					<key>type</key>
-					<integer>0</integer>
-				</dict>
-				<key>type</key>
-				<string>alfred.workflow.action.script</string>
-				<key>uid</key>
-				<string>58619DEC-D6A7-4344-B557-5617B39F12DF</string>
-				<key>version</key>
-				<integer>2</integer>
 			</dict>
 			<dict>
 				<key>config</key>
@@ -326,9 +327,9 @@
 					<key>queuedelayimmediatelyinitially</key>
 					<false/>
 					<key>queuedelaymode</key>
-					<integer>1</integer>
+					<integer>0</integer>
 					<key>queuemode</key>
-					<integer>1</integer>
+					<integer>2</integer>
 					<key>runningsubtext</key>
 					<string>Searching for "{query}"...</string>
 					<key>script</key>
@@ -353,12 +354,72 @@
 				<key>version</key>
 				<integer>3</integer>
 			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>launchmode</key>
+					<integer>0</integer>
+					<key>path</key>
+					<string>details.alfredui</string>
+					<key>stackview</key>
+					<true/>
+				</dict>
+				<key>type</key>
+				<string>alfred.workflow.userinterface.alfredui</string>
+				<key>uid</key>
+				<string>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</string>
+				<key>version</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>launchmode</key>
+					<integer>1</integer>
+					<key>path</key>
+					<string>trailer.alfredui</string>
+					<key>stackview</key>
+					<false/>
+				</dict>
+				<key>type</key>
+				<string>alfred.workflow.userinterface.alfredui</string>
+				<key>uid</key>
+				<string>A4C2E1F7-3B9D-4E6A-8F15-C7D2B9E04A61</string>
+				<key>version</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>availableviaurlhandler</key>
+					<false/>
+					<key>triggerid</key>
+					<string>trailer</string>
+				</dict>
+				<key>type</key>
+				<string>alfred.workflow.trigger.external</string>
+				<key>uid</key>
+				<string>5E8B3C2D-71A4-4F9E-B6D0-2C9A8E4F1B37</string>
+				<key>version</key>
+				<integer>1</integer>
+			</dict>
 		</array>
 		<key>readme</key>
-		<string>Run the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`) to search for movies and TV shows, respectively. Press ↩ to get details and ratings.
+		<string>Type the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`), then a title. Results show the poster, rating, genres, and the director or number of seasons.
 
 ![](img/about/walle-search.png)
-![](img/about/walle-details.png)</string>
+
+Press ↩ on a result for its details list: ratings from IMDb, Rotten Tomatoes and Metacritic, links to other sites, the trailer, and the cast. Press ↩ on a rating or link to open it, or ⌘C to copy an id.
+
+![](img/about/walle-details.png)
+
+Press ↩ on the title row to open the details window. Press ⌘1–⌘9 to open its links, and ⎋, ← or ⌫ to go back.
+
+![](img/about/walle-window.png)
+
+Trailers open on YouTube, or in their own window with **Play trailers in Alfred** turned on.
+
+Requires Alfred 6. On Alfred 5, use version 2.23.0.</string>
 		<key>uidata</key>
 		<dict>
 			<key>1BD6325A-1219-4F0A-B4EE-DC9C96450986</key>
@@ -375,12 +436,14 @@
 				<key>ypos</key>
 				<real>300</real>
 			</dict>
-			<key>58619DEC-D6A7-4344-B557-5617B39F12DF</key>
+			<key>5E8B3C2D-71A4-4F9E-B6D0-2C9A8E4F1B37</key>
 			<dict>
+				<key>note</key>
+				<string>Trailer button in the details window: a finish action from a button doesn't reach the connected trailer window, so load.py --open-trailer calls this.</string>
 				<key>xpos</key>
-				<real>660</real>
+				<real>860</real>
 				<key>ypos</key>
-				<real>275</real>
+				<real>415</real>
 			</dict>
 			<key>6079855E-22E9-4B4C-8DD5-919CB258064A</key>
 			<dict>
@@ -389,12 +452,28 @@
 				<key>ypos</key>
 				<real>140</real>
 			</dict>
+			<key>7E1C6F2A-5B3D-4C8E-9A41-D2F06B8C3E57</key>
+			<dict>
+				<key>note</key>
+				<string>Details list rows: the title row (m:&lt;id&gt;) opens the details window (⎋ goes back); link rows are opened by the window script before it shows.</string>
+				<key>xpos</key>
+				<real>660</real>
+				<key>ypos</key>
+				<real>275</real>
+			</dict>
 			<key>90677662-35FF-41CB-93F4-6758357932B1</key>
 			<dict>
 				<key>xpos</key>
 				<real>460</real>
 				<key>ypos</key>
 				<real>140</real>
+			</dict>
+			<key>A4C2E1F7-3B9D-4E6A-8F15-C7D2B9E04A61</key>
+			<dict>
+				<key>xpos</key>
+				<real>860</real>
+				<key>ypos</key>
+				<real>275</real>
 			</dict>
 			<key>B0199F8A-B91F-4A44-86AF-F910CC94EF82</key>
 			<dict>
@@ -599,9 +678,28 @@
 				<key>variable</key>
 				<string>include_justwatch</string>
 			</dict>
+			<dict>
+				<key>config</key>
+				<dict>
+					<key>default</key>
+					<false/>
+					<key>required</key>
+					<false/>
+					<key>text</key>
+					<string>Play trailers in Alfred</string>
+				</dict>
+				<key>description</key>
+				<string>Open trailers in their own player window instead of on YouTube in your browser.</string>
+				<key>label</key>
+				<string>Trailers</string>
+				<key>type</key>
+				<string>checkbox</string>
+				<key>variable</key>
+				<string>trailers_in_alfred</string>
+			</dict>
 		</array>
 		<key>version</key>
-		<string>2.23.0</string>
+		<string>3.0.0</string>
 		<key>webaddress</key>
 		<string>https://github.com/tmcknight/Movie-and-TV-Show-Search-Alfred-Workflow</string>
 	</dict>

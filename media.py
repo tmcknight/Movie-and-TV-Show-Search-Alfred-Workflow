@@ -5,11 +5,14 @@ import os
 import sys
 import argparse
 import urllib
+import urllib.error
 import urllib.parse
 import urllib.request
 import re
 import json
-from mako.template import Template
+import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor
 from unicodedata import normalize
 
 ICON_ROOT = '/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources'
@@ -27,14 +30,28 @@ ROTTEN_TOMATOES_SEARCH_URL = 'https://rottentomatoes.com/search/?search='
 LETTERBOXD_URL = 'https://letterboxd.com/tmdb/'
 SIMKL_URL = 'https://simkl.com/search'
 MOVIECHAT_URL = 'https://moviechat.org/'
+TMDB_URL = 'https://www.themoviedb.org/'
 CACHEDIR = os.path.expanduser(
     '~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.mcknight.movies')
-HTML_SUMMARY_FILE = os.path.join(CACHEDIR, "item.html")
+MAX_SAVED_TITLES = 500
+# What an autocompleted search result label looks like: "Title (Year)",
+# "Title (TBA)", optionally numbered "· 2".
+TITLE_LABEL = re.compile(r' \((\d{4}|TBA)\)( · \d+)?$')
+# Search results show a small poster as their icon, at its own 2:3 shape.
+RESULT_POSTER_SIZE = 'w92'
+RESULT_POSTER_TIMEOUT = 3
+NO_POSTER_ICON = 'img/no-poster.png'
+# Search result subtitles: rating · genres · director (movies) or seasons
+# (TV). Genres and those extras are fetched in parallel and cached.
+RESULT_DETAIL_TIMEOUT = 3
+# Seconds before rerunning a search to fill in directors/seasons it skipped.
+EXTRAS_RERUN_DELAY = 0.4
+META_MAX_AGE = {'genres': 30 * 86400, 'movie': 90 * 86400, 'tv': 7 * 86400}
 
-INCLUDE_LETTERBOXD = os.environ['include_letterboxd'] == "1"
-INCLUDE_SIMKL = os.environ['include_simkl'] == "1"
-INCLUDE_JUSTWATCH = os.environ['include_justwatch'] == "1"
-INCLUDE_MOVIECHAT = os.environ['include_moviechat'] == "1"
+INCLUDE_LETTERBOXD = os.environ.get('include_letterboxd', '0') == "1"
+INCLUDE_SIMKL = os.environ.get('include_simkl', '0') == "1"
+INCLUDE_JUSTWATCH = os.environ.get('include_justwatch', '0') == "1"
+INCLUDE_MOVIECHAT = os.environ.get('include_moviechat', '0') == "1"
 
 if not os.path.exists(CACHEDIR):
     os.makedirs(CACHEDIR)
@@ -46,13 +63,22 @@ def main(media_type, query):
 
     api_key = DEFAULT_TMDB_API_KEY
     language = os.environ["search_language"]
-    m = re.match('([m|t])\:([0-9]*)', query)
+    m = re.match(r'([m|t]):([0-9]*)', query)
+    # ⇥/↩ on a search result puts its title in Alfred's search field; map it
+    # back to the item the search found.
+    ref = None
+    if TITLE_LABEL.search(query.strip()):
+        ref = read_titles(media_type).get(normalize('NFC', query).strip())
+    if ref:
+        m = re.match(r'([m|t]):([0-9]*)', ref)
+        query = ref
     if query[:2] == 'm:' or query[:2] == 't:' and m.group(2):
         try:
             item = get_tmdb_info(m.group(1), m.group(2), api_key, language)
             log('TMDb info retrieved.')
             if m.group(1) == 'm' or m.group(1) == 't':
                 show_item_info(item, media_type)
+                warm_details_window(m.group(1) + ':' + m.group(2), item)
         except AttributeError as e:
             log(e)
             items.append({
@@ -85,25 +111,239 @@ def main(media_type, query):
             if not results['results']:
                 items.append({"title": "Nothing was found."})
             results['results'].sort(key=extract_popularity, reverse=True)
+            titles = {}
+            seen = {}
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                posters = pool.submit(result_posters, results['results'])
+                # While typing, Alfred starts a run per keystroke: use only
+                # cached directors/seasons, and rerun once typing pauses
+                # (the same query twice in a row) to fetch the rest.
+                settled = same_query_as_last(media_type, query)
+                extras = pool.submit(result_extras, media_type, results['results'],
+                                     api_key, language, fetch=settled)
+                posters, (extras, rerun) = posters.result(), extras.result()
             for item in results['results']:
                 poster = 'https://image.tmdb.org/t/p/w500' + item['poster_path'] if item['poster_path'] else ''
 
                 if media_type == 'movie':
-                    title = item['title']
-                    if item.get('release_date', 0):
-                        title += ' (' + item['release_date'][:4] + ')'
+                    title, date = item['title'], item.get('release_date')
                 else:
-                    title = item['name']
-                    if item.get('first_air_date', 0):
-                        title += ' (' + item['first_air_date'][:4] + ')'
+                    title, date = item['name'], item.get('first_air_date')
+                # Every label ends in "(year)", or "(TBA)" when TMDb has no
+                # date, so a typed search never looks like one.
+                title = normalize('NFC', f"{title} ({date[:4] if date else 'TBA'})")
+                # Results that share a title and year get numbered, so each
+                # one autocompletes a label that maps back to it.
+                seen[title] = seen.get(title, 0) + 1
+                if seen[title] > 1:
+                    title += ' · ' + str(seen[title])
+                titles[title] = media_type[:1] + ':' + str(item['id'])
                 items.append({
                     "title": title,
+                    "subtitle": extras.get(item['id'], ''),
                     "arg": str(item['id']),
                     "quicklookurl": poster,
                     "valid": False,
-                    "autocomplete": media_type[:1] + ':' + str(item['id'])
+                    "autocomplete": title
                 })
+                # "fit" keeps the poster's shape in Alfred's square icon; a
+                # blank poster shape stands in for a missing one.
+                items[-1]["icon"] = {"path": posters.get(item['id']) or NO_POSTER_ICON,
+                                     "resize": "fit"}
+            save_titles(media_type, titles)
+            if rerun:
+                output_items(rerun=EXTRAS_RERUN_DELAY)
+                return 0
     output_items()
+
+
+def result_extras(media_type, results, api_key, language, fetch=True):
+    """Subtitles for search results, by TMDb id, e.g.
+    "★ 8.0 · Drama, Crime · Robert Rossen" or "★ 7.8 · Drama · 2 seasons"."""
+    genres = genre_names(media_type, api_key, language)
+    missing = []
+
+    def extra(result):
+        got = extra_or_none(result)
+        if got is None:
+            missing.append(result['id'])
+        return got or ''
+
+    def extra_or_none(result):
+        # None: not cached, and not fetched this time.
+        if media_type == 'movie':
+            crew = cached_json(f"movie-{result['id']}-directors", META_MAX_AGE['movie'],
+                               fetch and (lambda: {"directors": [
+                                   person['name'] for person in fetch_json(
+                                       f"{TMDB_API_URL}movie/{result['id']}/credits",
+                                       {"api_key": api_key}).get('crew', [])
+                                   if person.get('job') == 'Director']}))
+            return None if crew is None else ', '.join(crew.get('directors', [])[:2])
+        show = cached_json(f"tv-{result['id']}-seasons", META_MAX_AGE['tv'],
+                           fetch and (lambda: {"seasons": fetch_json(
+                               f"{TMDB_API_URL}tv/{result['id']}",
+                               {"api_key": api_key}).get('number_of_seasons')}))
+        if show is None:
+            return None
+        seasons = show.get('seasons')
+        if not seasons:
+            return ''
+        return f"{seasons} season" + ('' if seasons == 1 else 's')
+
+    def subtitle(result):
+        parts = []
+        if result.get('vote_count'):
+            parts.append(f"★ {result.get('vote_average', 0):.1f}")
+        names = [genres[g] for g in result.get('genre_ids', []) if g in genres][:2]
+        if names:
+            parts.append(', '.join(names))
+        parts.append(extra(result))
+        return result['id'], ' · '.join(part for part in parts if part)
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        subtitles = dict(pool.map(subtitle, results))
+    return subtitles, bool(missing) and not fetch
+
+
+def same_query_as_last(media_type, query):
+    """True when the previous search run had this same query: a rerun, or
+    the user stopped typing. Remembers this query for the next run."""
+    path = os.path.join(CACHEDIR, 'last-search-' + media_type + '.txt')
+    try:
+        with open(path) as f:
+            same = f.read() == query
+    except OSError:
+        same = False
+    try:
+        with open(path, 'w') as f:
+            f.write(query)
+    except OSError as e:
+        log(repr(e))
+    return same
+
+
+def genre_names(media_type, api_key, language):
+    data = cached_json(f"genres-{media_type}-{language}", META_MAX_AGE['genres'],
+                       lambda: fetch_json(f"{TMDB_API_URL}genre/{media_type}/list",
+                                          {"api_key": api_key, "language": language}))
+    return {genre['id']: genre['name'] for genre in (data or {}).get('genres', [])}
+
+
+def cached_json(name, max_age, fetch):
+    """fetch()'s result, kept in the cache for max_age seconds; None if it
+    fails, or if fetch is falsy (cache only), and nothing is cached."""
+    path = os.path.join(CACHEDIR, 'meta', name + '.json')
+    try:
+        if time.time() - os.path.getmtime(path) < max_age:
+            with open(path) as f:
+                return json.load(f)
+    except (OSError, ValueError):
+        pass
+    if not fetch:
+        return None
+    try:
+        data = fetch()
+    except Exception as e:
+        log(repr(e))
+        return None
+    write_json(path, data)
+    return data
+
+
+def fetch_json(url, params):
+    with urllib.request.urlopen(f"{url}?{urllib.parse.urlencode(params)}",
+                                timeout=RESULT_DETAIL_TIMEOUT) as r:
+        return json.load(r)
+
+
+def result_posters(results):
+    """Small posters for search results, by TMDb id: Alfred's icons must be
+    local files, so download the ones not cached yet, all at once."""
+    folder = os.path.join(CACHEDIR, 'posters')
+    os.makedirs(folder, exist_ok=True)
+
+    def fetch(result):
+        path = result.get('poster_path')
+        if not path:
+            return result['id'], None
+        target = os.path.join(folder, RESULT_POSTER_SIZE + path.replace('/', '-'))
+        if not os.path.exists(target):
+            try:
+                url = 'https://image.tmdb.org/t/p/' + RESULT_POSTER_SIZE + path
+                with urllib.request.urlopen(url, timeout=RESULT_POSTER_TIMEOUT) as r:
+                    data = r.read()
+                tmp = f'{target}.{os.getpid()}.tmp'
+                with open(tmp, 'wb') as f:
+                    f.write(data)
+                os.replace(tmp, target)
+            except Exception as e:
+                log(repr(e))
+                return result['id'], None
+        return result['id'], target
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        return dict(pool.map(fetch, results))
+
+
+def titles_cache(media_type):
+    return os.path.join(CACHEDIR, 'titles-' + media_type + '.json')
+
+
+def read_titles(media_type):
+    try:
+        with open(titles_cache(media_type)) as f:
+            return {title: ref for title, ref in json.load(f).items()
+                    if TITLE_LABEL.search(title)}
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def save_titles(media_type, titles):
+    """Remember which item each autocompleted title stands for. Keep earlier
+    searches' titles too (newest last, capped), so a title still resolves
+    after searching for something else and coming back."""
+    saved = {t: r for t, r in read_titles(media_type).items() if t not in titles}
+    saved.update(titles)
+    saved = dict(list(saved.items())[-MAX_SAVED_TITLES:])
+    write_json(titles_cache(media_type), saved)
+
+
+def write_json(path, data):
+    """Write a cache file atomically. Best effort: a failure (disk full, a
+    clash with an overlapping run) is logged, never fatal to a search."""
+    tmp = f'{path}.{os.getpid()}.tmp'
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(tmp, 'w') as f:
+            json.dump(data, f)
+        os.replace(tmp, path)
+    except OSError as e:
+        log(repr(e))
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
+def details_cache(ref):
+    return os.path.join(CACHEDIR, 'details-' + ref.replace(':', '-') + '.json')
+
+
+def warm_details_window(ref, item):
+    """Hand this item to the Alfred 6 details window's script in the
+    background, so the window opens already filled in on ↩."""
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          'details.alfredui', 'scripts', 'load.py')
+    if not os.path.exists(script):
+        return
+    try:
+        with open(details_cache(ref), 'w') as f:
+            json.dump({"item": item, "rows": items}, f)
+        subprocess.Popen([sys.executable, script, ref, '--warm'],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError as e:
+        log(repr(e))
 
 
 def get_tmdb_configuration(api_key):
@@ -119,7 +359,11 @@ def get_tmdb_info(item_type, item_id, api_key, language):
     elif item_type == 't':
         url += 'tv/' + item_id
     params = dict(
-        api_key=api_key, language=language, append_to_response='videos,external_ids,watch/providers,releases,content_ratings')
+        api_key=api_key, language=language,
+        append_to_response='videos,external_ids,watch/providers,releases,content_ratings,images',
+        # Logos for the details window: the search language, then English,
+        # then language-less ones.
+        include_image_language=f'{language},en,null')
 
     return get_json(url, params)
 
@@ -135,17 +379,25 @@ def show_item_info(item, media_type):
     title_key = 'title'
     release_date_key = 'release_date'
     if media_type == 'movie':
-        imdb_id = item['imdb_id']
+        imdb_id = item.get('imdb_id')
     elif media_type == 'tv':
-        imdb_id = item['external_ids']['imdb_id']
+        imdb_id = item['external_ids'].get('imdb_id')
         title_key = 'name'
         release_date_key = 'first_air_date'
-    omdb_info = get_omdb_info(imdb_id)
-    log('OMDb info retrieved.')
 
-    if omdb_info['Response'] == 'False':
-        items.append({"title": "Details not found."})
-        return
+    # Titles without an OMDb record (usually no IMDb id) still get a details
+    # list from TMDb data alone: no ratings or credits, but the links work.
+    omdb_info = {}
+    if imdb_id:
+        try:
+            omdb_info = get_omdb_info(imdb_id)
+            log('OMDb info retrieved.')
+        except (urllib.error.URLError, ValueError) as e:
+            # e.g. the shared key's daily limit (HTTP 401)
+            log(repr(e))
+        if omdb_info.get('Response') == 'False':
+            omdb_info = {}
+    imdb_id = get_omdb_value(omdb_info, 'imdbID') or imdb_id
 
     title = item[title_key]
     if item[release_date_key]:
@@ -154,10 +406,15 @@ def show_item_info(item, media_type):
     items.append({"title": title,
                   "subtitle": get_subtitle(item, omdb_info, media_type),
                   "valid": True,
-                  # icon : "poster.jpg",
-                  "quicklookurl": "file://" + urllib.request.pathname2url(HTML_SUMMARY_FILE),
+                  # ↩ opens the Alfred 6 details window; every other row's arg
+                  # is a URL, which the window's script opens instead.
+                  "arg": media_type[:1] + ':' + str(item['id']),
                   "text": {
-                      "copy": str(item['id'])}
+                      "copy": str(item['id'])},
+                  # The same small poster as the search result (usually
+                  # cached by then), or the blank poster shape.
+                  "icon": {"path": result_posters([item]).get(item['id']) or NO_POSTER_ICON,
+                           "resize": "fit"}
                   })
 
     search = urllib.parse.quote(item[title_key].encode(
@@ -165,26 +422,38 @@ def show_item_info(item, media_type):
 
     all_search_sites = []
 
-    # IMDb
-    search_url = IMDB_URL + 'title/' + omdb_info['imdbID']
-    all_search_sites.append(search_url)
-    if omdb_info['imdbRating'] != 'N/A':
+    # IMDb, or TMDb when there is no IMDb record
+    if not imdb_id:
+        search_url = TMDB_URL + media_type + '/' + str(item['id'])
+        all_search_sites.append(search_url)
+        items.append({"title": 'TMDb',
+                      "subtitle": f"View '{item[title_key]}' on TMDb",
+                      "valid": True,
+                      "arg": search_url,
+                      "text": {
+                          "copy": str(item['id'])}
+                      })
+    elif get_omdb_value(omdb_info, 'imdbRating'):
+        search_url = IMDB_URL + 'title/' + imdb_id
+        all_search_sites.append(search_url)
         items.append({"title": omdb_info['imdbRating'],
                       "subtitle": 'IMDb (' + omdb_info['imdbVotes'] + " votes)",
                       "icon": {"path": 'img/imdb.png'},
                       "valid": True,
                       "arg": search_url,
                       "text": {
-                          "copy": omdb_info['imdbID']}
+                          "copy": imdb_id}
                       })
     else:
+        search_url = IMDB_URL + 'title/' + imdb_id
+        all_search_sites.append(search_url)
         items.append({"title": 'IMDb',
                       "subtitle": f"Search IMDb for '{item[title_key]}'",
                       "icon": {"path": 'img/imdb.png'},
                       "valid": True,
                       "arg": search_url,
                       "text": {
-                          "copy": omdb_info['imdbID']}
+                          "copy": imdb_id}
                       })
 
     # TheTVDB
@@ -242,7 +511,7 @@ def show_item_info(item, media_type):
     elif media_type == 'tv':
         search_url += '/?category=1'
     all_search_sites.append(search_url)
-    if omdb_info['Metascore'] != 'N/A':
+    if get_omdb_value(omdb_info, 'Metascore'):
         items.append({"title": omdb_info['Metascore'],
                       "subtitle": 'Metacritic',
                       "icon": {"path": 'img/meta.png'},
@@ -277,8 +546,8 @@ def show_item_info(item, media_type):
                       "arg": search_url})
 
     # MovieChat
-    if INCLUDE_MOVIECHAT:
-        search_url = MOVIECHAT_URL + omdb_info['imdbID']
+    if INCLUDE_MOVIECHAT and imdb_id:
+        search_url = MOVIECHAT_URL + imdb_id
         all_search_sites.append(search_url)
         items.append({"title": 'MovieChat',
                       "subtitle": f"View '{item[title_key]}' on MovieChat",
@@ -333,22 +602,15 @@ def show_item_info(item, media_type):
                   "valid": True,
                   "arg": '||'.join(all_search_sites)})
 
-    items.append({"title": omdb_info['Director'],
-                  "subtitle": 'Director',
-                  "icon": {"path": ICON_USER},
-                  "text": {"copy": omdb_info['Director']}})
-
-    items.append({"title": omdb_info['Writer'],
-                  "subtitle": 'Writer',
-                  "icon": {"path": ICON_USER},
-                  "text": {"copy": omdb_info['Writer']}})
-
-    items.append({"title": omdb_info['Actors'],
-                  "subtitle": 'Actors',
-                  "icon": {"path": ICON_GROUP},
-                  "text": {"copy": omdb_info['Actors']}})
-
-    generate_item_html(omdb_info, item, media_type)
+    for key, icon in (('Director', ICON_USER), ('Writer', ICON_USER),
+                      ('Actors', ICON_GROUP)):
+        people = get_omdb_value(omdb_info, key)
+        if people:
+            items.append({"title": people,
+                          "subtitle": key,
+                          "icon": {"path": icon},
+                          "valid": False,
+                          "text": {"copy": people}})
 
     return
 
@@ -420,34 +682,9 @@ def get_tomato_user_subtitle(omdb_info):
     return 'Rotten Tomatoes Audience Score'
 
 
-def generate_item_html(omdb_info, tmdb_info, media_type):
-    item_template = Template(
-        filename='templates/media.html', output_encoding='utf-8')
-
-    production_company = 'N/A'
-    if tmdb_info['production_companies']:
-        production_company = tmdb_info['production_companies'][0]['name']
-
-    html = item_template.render(
-        title=omdb_info['Title'],
-        backdrop_path=tmdb_info['backdrop_path'],
-        poster=tmdb_info['poster_path'],
-        production_company=production_company,
-        overview=tmdb_info['overview'],
-        release_date=omdb_info['Released'],
-        director=omdb_info['Director'],
-        actors=omdb_info['Actors'],
-        genre=get_subtitle(tmdb_info, omdb_info, media_type)
-    )
-    with open(HTML_SUMMARY_FILE, "wb") as text_file:
-        text_file.write(html)
-
-    return
-
-
 def get_subtitle(tmdb_info, omdb_info, media_type):
     locale = os.environ['locale']
-    certification = omdb_info['Rated']
+    certification = get_omdb_value(omdb_info, 'Rated') or 'N/A'
     if media_type == 'movie' and 'releases' in tmdb_info.keys():
         for release in tmdb_info['releases']['countries']:
             if release['iso_3166_1'] == locale:
@@ -458,12 +695,19 @@ def get_subtitle(tmdb_info, omdb_info, media_type):
             if release['iso_3166_1'] == locale:
                 certification = release['rating']
                 break
+    runtime = get_omdb_value(omdb_info, 'Runtime')
+    if not runtime:
+        minutes = tmdb_info.get('runtime') or next(
+            iter(tmdb_info.get('episode_run_time') or []), None)
+        runtime = f'{minutes} min' if minutes else None
+    genre = get_omdb_value(omdb_info, 'Genre') or ', '.join(
+        g['name'] for g in tmdb_info.get('genres') or [])
     subtitleItems = []
-    if omdb_info['Runtime'] != 'N/A':
-        subtitleItems.append(format_runtime(omdb_info['Runtime']))
-    if omdb_info['Genre'] != 'N/A':
-        subtitleItems.append(omdb_info['Genre'])
-    if certification != 'N/A':
+    if runtime:
+        subtitleItems.append(format_runtime(runtime))
+    if genre:
+        subtitleItems.append(genre)
+    if certification and certification != 'N/A':
         if "rated" not in certification.lower():
             certification = 'Rated ' + certification
         subtitleItems.append(certification)
@@ -491,8 +735,10 @@ def extract_popularity(result):
     return result['popularity']
 
 
-def output_items():
+def output_items(rerun=None):
     output = {"items": items}
+    if rerun:
+        output["rerun"] = rerun
     output_str = json.dumps(output)
     sys.stdout.write(output_str)
     sys.stdout.flush()

@@ -1,0 +1,85 @@
+name: Release
+
+# Publish a new version: run it from the Actions tab with the version number.
+# It sets the version in info.plist (committing "Bump version" if it
+# changed), tags the commit, builds the .alfredworkflow and creates a GitHub
+# release with notes generated from the merged pull requests.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish, e.g. 3.0.1
+        required: true
+      notes:
+        description: Text to put above the generated release notes (optional)
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      NOTES: ${{ inputs.notes }}
+      GH_TOKEN: ${{ github.token }}
+      ASSET: Movie-and-TV-Show-Search-Alfred-Workflow.alfredworkflow
+    steps:
+      - name: Check the version
+        run: |
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Version must look like 3.0.1, got '$VERSION'"
+            exit 1
+          fi
+          if [[ $GITHUB_REF_NAME != "${{ github.event.repository.default_branch }}" ]]; then
+            echo "::error::Run this from the default branch, not $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Check the tag is new
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
+            echo "::error::Tag $VERSION already exists"
+            exit 1
+          fi
+
+      - name: Set the version in info.plist
+        run: |
+          # Edit the text in place, so Alfred's formatting is kept.
+          python3 - <<'EOF'
+          import os, plistlib, re
+          path = 'info.plist'
+          text = open(path, encoding='utf-8').read()
+          text, n = re.subn(r'(<key>version</key>\s*<string>)[^<]*(</string>)',
+                            lambda m: m.group(1) + os.environ['VERSION'] + m.group(2), text)
+          if n != 1:
+              raise SystemExit(f'expected one top-level version key, found {n}')
+          open(path, 'w', encoding='utf-8').write(text)
+          assert plistlib.loads(text.encode())['version'] == os.environ['VERSION']
+          EOF
+          if ! git diff --quiet info.plist; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Bump version" info.plist
+            git push
+          fi
+
+      - name: Build the workflow
+        run: |
+          # Everything tracked in git, minus what only the repository needs.
+          git ls-files -z | grep -zv -e '^\.github/' -e '^\.gitignore$' \
+            | xargs -0 zip -q -X "$ASSET"
+          unzip -l "$ASSET"
+
+      - name: Create the release
+        run: |
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" "$ASSET" --title "$VERSION" \
+            --generate-notes --notes "$NOTES" --latest

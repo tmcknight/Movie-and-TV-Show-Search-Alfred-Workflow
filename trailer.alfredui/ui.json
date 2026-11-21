@@ -1,0 +1,78 @@
+{
+  "bundleid": "com.mcknight.movies.trailer",
+  "variablesconfig": {
+    "item": {
+      "src": "args[0]",
+      "scriptenv": true
+    }
+  },
+  "window": {
+    "title": "Trailer",
+    "padding": 0,
+    "appearance": "dark",
+    "fullscreenable": true,
+    "titlebarappearstransparent": true,
+    "titlevisibility": "hidden",
+    "frameautosave": true,
+    "size": {
+      "width": 960,
+      "height": 568
+    },
+    "root": {
+      "type": "view",
+      "id": "root",
+      "layout": "stack",
+      "background": "#000000",
+      "events": [
+        {
+          "triggers": "preload",
+          "action": {
+            "type": "script",
+            "src": "../details.alfredui/scripts/load.py",
+            "args": [
+              "{var:item}",
+              "--player-check"
+            ]
+          }
+        },
+        {
+          "triggers": "launched",
+          "action": {
+            "type": "script",
+            "src": "../details.alfredui/scripts/load.py",
+            "args": [
+              "{var:item}",
+              "--player"
+            ],
+            "async": true
+          }
+        }
+      ],
+      "components": [
+        {
+          "type": "button",
+          "text": "Close",
+          "hidden": true,
+          "shortcut": "⎋",
+          "events": [
+            {
+              "triggers": "actioned",
+              "action": {
+                "type": "json",
+                "src": {
+                  "finish": {}
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "webkitview",
+          "id": "player",
+          "text": "<html><body style='margin:0;background:#000'></body></html>",
+          "openlinksexternally": true
+        }
+      ]
+    }
+  }
+}
