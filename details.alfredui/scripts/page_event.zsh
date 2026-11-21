@@ -29,7 +29,7 @@ JXA
     ;;
   back)
     # Alfred has no action for going back a view, but ⎋ does it, and the
-    # window has keyboard focus (← was just pressed in it). Post the key
+    # window has keyboard focus (← or ⌫ was just pressed in it). Post the key
     # with CoreGraphics: unlike System Events, it needs no Automation
     # permission prompt, only the Accessibility access Alfred already has.
     osascript -l JavaScript -e '

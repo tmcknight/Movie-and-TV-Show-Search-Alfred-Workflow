@@ -5,7 +5,7 @@
        #h=<px>       fit the window's height to the page
        #copy=<file>  copy the poster image
        #trailer=<id> open the trailer window
-       #back         go back to the details list (←)
+       #back         go back to the details list (← or ⌫)
      Every hash ends in &t=<time>, so repeating one still changes the URL. -->
 <html class="{{class}}">
 <meta charset="utf-8">
@@ -163,9 +163,9 @@
     }
   });
 
-  // ← goes back to the details list, like ⎋.
+  // ← and ⌫ go back to the details list, like ⎋.
   document.addEventListener('keydown', e => {
-    if (e.key !== 'ArrowLeft' || e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return;
+    if ((e.key !== 'ArrowLeft' && e.key !== 'Backspace') || e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
     say('back');
   });
