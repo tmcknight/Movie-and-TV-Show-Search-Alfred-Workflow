@@ -405,10 +405,21 @@
 			</dict>
 		</array>
 		<key>readme</key>
-		<string>Run the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`) to search for movies and TV shows, respectively. Press ↩ to get details and ratings.
+		<string>Type the Movie Search Keyword (default: `movie`) or TV Search Keyword (default: `tv`), then a title. Results show the poster, rating, genres, and the director or number of seasons.
 
 ![](img/about/walle-search.png)
-![](img/about/walle-details.png)</string>
+
+Press ↩ on a result for its details list: ratings from IMDb, Rotten Tomatoes and Metacritic, links to other sites, the trailer, and the cast. Press ↩ on a rating or link to open it, or ⌘C to copy an id.
+
+![](img/about/walle-details.png)
+
+Press ↩ on the title row to open the details window. Press ⌘1–⌘9 to open its links, and ⎋, ← or ⌫ to go back.
+
+![](img/about/walle-window.png)
+
+Trailers open on YouTube, or in their own window with **Play trailers in Alfred** turned on.
+
+Requires Alfred 6. On Alfred 5, use version 2.23.0.</string>
 		<key>uidata</key>
 		<dict>
 			<key>1BD6325A-1219-4F0A-B4EE-DC9C96450986</key>
