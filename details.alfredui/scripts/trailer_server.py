@@ -8,7 +8,8 @@ page that embeds the player from http://localhost gives it one.
 - GET /trailer?v=<YouTube id>  page with just the player, filling the view
 - GET /ping                    "movies-trailer", so load.py knows it's ours
 
-Listens on localhost only and exits after IDLE_SECONDS without a request.
+Listens on localhost only. The player page pings it every HEARTBEAT_SECONDS
+while open, so it exits IDLE_SECONDS after the trailer window closes.
 Playback itself talks to YouTube, not to this server.
 """
 import re
@@ -19,7 +20,8 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST = '127.0.0.1'
-IDLE_SECONDS = 300
+HEARTBEAT_SECONDS = 5
+IDLE_SECONDS = 15
 PING_REPLY = b'movies-trailer'
 # Height of YouTube's title and logo strips, cropped off top and bottom.
 CROP = 60
@@ -103,12 +105,16 @@ function wake() {{
 }}
 $('shield').onclick = toggle; $('big').onclick = toggle; $('play').onclick = toggle;
 $('mute').onclick = toggleMute;
+setInterval(function () {{ fetch('/ping', {{cache: 'no-store'}}).catch(function () {{}}); }}, {heartbeat});
 $('track').onclick = function (e) {{
   var r = this.getBoundingClientRect();
   player.seekTo(player.getDuration() * (e.clientX - r.left) / r.width, true);
 }};
 document.onmousemove = wake;
 document.onkeydown = function (e) {{
+  // The web view has the keyboard, so the window's own ⎋ never fires; ask
+  // Alfred to close it through the URL hash (page_event.zsh).
+  if (e.key === 'Escape') {{ location.hash = 'close&t=' + Date.now(); return; }}
   if (e.key === ' ') {{ toggle(); e.preventDefault(); }}
   else if (e.key === 'm') toggleMute();
   else if (e.key === 'ArrowRight') player.seekTo(player.getCurrentTime() + 5, true);
@@ -134,7 +140,8 @@ class Handler(BaseHTTPRequestHandler):
             video = urllib.parse.parse_qs(url.query).get('v', [''])[0]
             if VIDEO_ID.match(video):
                 origin = f'http://localhost:{self.server.server_port}'
-                page = PAGE.format(id=video, origin=origin, crop=CROP, crop2=2 * CROP)
+                page = PAGE.format(id=video, origin=origin, crop=CROP, crop2=2 * CROP,
+                                   heartbeat=HEARTBEAT_SECONDS * 1000)
                 return self.reply(200, 'text/html; charset=utf-8', page.encode())
         self.reply(404, 'text/plain', b'not found')
 
@@ -155,7 +162,7 @@ def main(port):
 
     def stop_when_idle():
         while time.monotonic() - last_request < IDLE_SECONDS:
-            time.sleep(5)
+            time.sleep(1)
         server.shutdown()
 
     threading.Thread(target=stop_when_idle, daemon=True).start()
