@@ -2,7 +2,7 @@
 
 Search for a movie or TV show from Alfred, then get its ratings, details and links.
 
-![Searching for WALL·E](img/about/walle-search.png)
+![Searching for WALL-E](img/about/walle-search.png)
 
 ## Requirements
 
@@ -22,7 +22,7 @@ Press ↩ (or ⇥) on a result to see its details.
 
 ### Details
 
-![WALL·E's details](img/about/walle-details.png)
+![WALL-E's details](img/about/walle-details.png)
 
 The details list has the ratings from IMDb, Rotten Tomatoes and Metacritic, links to the title on other sites and its trailer, and the director, writers and actors.
 
@@ -31,17 +31,17 @@ The details list has the ratings from IMDb, Rotten Tomatoes and Metacritic, link
 
 ### Details window
 
-![WALL·E's details window](img/about/walle-window.png)
+![WALL-E's details window](img/about/walle-window.png)
 
 Press ↩ on the title row (the one with the poster) to open the details window, with the poster, backdrop, overview, credits, ratings and links.
 
 - Click a rating or a link to open it, or press ⌘1–⌘9 to open them in order.
 - Hover over the poster and click the copy button to copy the poster image.
-- Press ⎋, ← or ⌫ to go back to the details list.
+- Press ⎋ / ← / ⌫ to go back to the details list.
 
 ### Trailers
 
-Trailers open on YouTube in your browser. To play them in their own window instead (which can go full screen with ⌃⌘F), turn on **Play trailers in Alfred** in the workflow's configuration.
+Trailers open on YouTube in your browser. To play them in their own window instead (which can go full screen with ⌃⌘F), turn on `Play trailers in Alfred` in the Workflow’s Configuration.
 
 ## Configuration
 
