@@ -413,11 +413,11 @@ Press ↩ on a result for its details list: ratings from IMDb, Rotten Tomatoes a
 
 ![](img/about/walle-details.png)
 
-Press ↩ on the title row to open the details window. Press ⌘1–⌘9 to open its links, and ⎋, ← or ⌫ to go back.
+Press ↩ on the title row to open the details window. Press ⌘1–⌘9 to open its links, and ⎋ / ← / ⌫ to go back.
 
 ![](img/about/walle-window.png)
 
-Trailers open on YouTube, or in their own window with **Play trailers in Alfred** turned on.
+Trailers open on YouTube, or in their own window with `Play trailers in Alfred` turned on in the Workflow’s Configuration.
 
 Requires Alfred 6. On Alfred 5, use version 2.23.0.</string>
 		<key>uidata</key>
