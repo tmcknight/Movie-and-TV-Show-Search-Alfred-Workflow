@@ -1,5 +1,6 @@
 {
   "bundleid": "com.mcknight.movies.trailer",
+  "iconpath": "../icon.png",
   "variablesconfig": {
     "item": {
       "src": "args[0]",
@@ -69,8 +70,22 @@
         {
           "type": "webkitview",
           "id": "player",
+          "focus": true,
           "text": "<html><body style='margin:0;background:#000'></body></html>",
-          "openlinksexternally": true
+          "openlinksexternally": true,
+          "events": [
+            {
+              "triggers": "changed",
+              "action": {
+                "type": "script",
+                "src": "../details.alfredui/scripts/page_event.zsh",
+                "args": [
+                  "{value:self.src}"
+                ],
+                "async": true
+              }
+            }
+          ]
         }
       ]
     }

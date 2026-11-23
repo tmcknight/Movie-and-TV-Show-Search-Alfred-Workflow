@@ -1,7 +1,7 @@
 #!/bin/zsh
-# Runs on the details page's "changed" event with the page's URL in $1. The
-# page asks for things through its URL hash (see page.html); a change
-# without one (a page loading) is ignored.
+# Runs on the details and trailer pages' "changed" event with the page's URL
+# in $1. The page asks for things through its URL hash (see page.html); a
+# change without one (a page loading) is ignored.
 setopt extendedglob
 [[ $1 == *'#'* ]] || exit 0
 hash=${${1#*\#}%%\&t=*}
@@ -36,6 +36,10 @@ JXA
       ObjC.import("CoreGraphics");
       for (const down of [true, false])
         $.CGEventPost($.kCGHIDEventTap, $.CGEventCreateKeyboardEvent($(), 53, down));'
+    ;;
+  close)
+    # ⎋ in the trailer window's player page.
+    print -r -- '{"finish":{}}'
     ;;
   trailer=[A-Za-z0-9_-]##)
     exec "${0:A:h}/load.py" "${hash#trailer=}" --open-trailer
